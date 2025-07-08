@@ -1,12 +1,14 @@
 from abc import ABC
+from collections.abc import Sequence
+from contextlib import asynccontextmanager
 from dataclasses import dataclass
 from enum import Enum
-from typing import Any, Generic, Sequence, TypeVar
+from typing import Any, Generic, TypeVar
 
 from sqlalchemy import and_, delete, func, select, update
-from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy.sql import Select
+from sqlalchemy.sql import Select, Update, Delete
 
+from src.core.db.asmysql import MyDatabaseConfig
 from src.core.db.entity import Entity
 from src.core.exception.error_no import ErrorNo
 from src.core.exception.exceptions import DomainException
@@ -45,7 +47,7 @@ class Filter:
     value: Any = None
     json_path: str|None = None  # For JSON operations like '$.roles[*].name'
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         # Validate filter based on operator
         if self.operator in [FilterOperator.IS_NULL, FilterOperator.IS_NOT_NULL]:
             self.value = None
@@ -83,11 +85,11 @@ class Pagination:
 class BaseRepository(ABC, Generic[T]):
     def __init__(
             self,
-            session: AsyncSession,
+            db_config: MyDatabaseConfig,
             model: type[T],
             id_field: str = "id"
     ):
-        self._session = session
+        self._db_config = db_config
         self._model = model
         self._id_field = id_field
 
@@ -108,73 +110,71 @@ class BaseRepository(ABC, Generic[T]):
             id_value: Any,
     ) -> T | None:
         query = select(self._model).where(getattr(self._model, self._id_field) == id_value)
-        result = await self._session.execute(query)
-        return result.scalar_one_or_none()
+        async with self.get_session() as session:
+            result = await session.execute(query)
+            return result.scalar_one_or_none()
 
-    async def create(self, obj_in: dict[str, Any]) -> T:
-        if isinstance(obj_in, dict):
-            db_obj = self._model(**obj_in)
+
+    async def create(self, data: dict[str, Any] | T) -> T:
+        if isinstance(data, dict):
+            entity = self._model(**data)
         else:
-            # Assume it's a Pydantic model or similar
-            create_data = obj_in.model_dump() if hasattr(obj_in, 'model_dump') else obj_in.__dict__
-            db_obj = self._model(**create_data)
-
-        self._session.add(db_obj)
-        await self._session.flush()
-        await self._session.refresh(db_obj)
-        return db_obj
+            entity = data
+        async with self.get_session() as session:
+            session.add(entity)
+            await session.flush()
+            await session.refresh(entity)
+            return entity
 
     async def update(
             self,
             id_value: Any,
-            obj_in: dict[str, Any],
+            data: dict[str, Any] | T,
     ) -> T:
-        db_obj = await self.get_by_id(id_value)
-
-        if isinstance(obj_in, dict):
-            update_data = obj_in
+        if isinstance(data, dict):
+            d = data
         else:
-            # Handle Pydantic models with exclude_unset
-            if hasattr(obj_in, 'model_dump'):
-                update_data = obj_in.model_dump(exclude_unset=True)
-            else:
-                update_data = {k: v for k, v in obj_in.__dict__.items() if v is not None}
+            d = data.__dict__
 
-        for field, value in update_data.items():
-            if hasattr(db_obj, field):
-                setattr(db_obj, field, value)
+        entity = await self.get_by_id(id_value)
 
-        await self._session.flush()
-        await self._session.refresh(db_obj)
-        return db_obj
+        for field, value in d.items():
+            if hasattr(entity, field):
+                setattr(entity, field, value)
+        async with self.get_session() as session:
+            await session.flush()
+            await session.refresh(entity)
+            return entity
 
     async def update_many(
             self,
             filters: list[Filter],
             update_data: dict[str, Any]
     ) -> int:
-        """Update multiple entities matching filters"""
         query = update(self._model)
         query = self._apply_filters(query, filters)
         query = query.values(**update_data)
 
-        result = await self._session.execute(query)
-        return result.rowcount or 0
+        async with self.get_session() as session:
+            result = await session.execute(query)
+            return result.rowcount or 0
 
     async def delete(self, id_value: Any) -> bool:
         db_obj = await self.find_by_id(id_value)
         if db_obj is None:
             return False
 
-        await self._session.delete(db_obj)
-        return True
+        async with self.get_session() as session:
+            await session.delete(db_obj)
+            return True
 
     async def delete_many(self, filters: list[Filter]) -> int:
         query = delete(self._model)
         query = self._apply_filters(query, filters)
 
-        result = await self._session.execute(query)
-        return result.rowcount or 0
+        async with self.get_session() as session:
+            result = await session.execute(query)
+            return result.rowcount or 0
 
     async def find_all(
             self,
@@ -195,9 +195,9 @@ class BaseRepository(ABC, Generic[T]):
                 query = query.limit(pagination.limit)
             if pagination.offset is not None:
                 query = query.offset(pagination.offset)
-
-        result = await self._session.execute(query)
-        return result.scalars().all()
+        async with self.get_session() as session:
+            result = await session.execute(query)
+            return result.scalars().all()
 
     async def find_one(
             self,
@@ -214,8 +214,9 @@ class BaseRepository(ABC, Generic[T]):
 
         query = query.limit(1)
 
-        result = await self._session.execute(query)
-        return result.scalar_one_or_none()
+        async with self.get_session() as session:
+            result = await session.execute(query)
+            return result.scalar_one_or_none()
 
     async def count(self, filters: list[Filter] | None = None) -> int:
         query = select(func.count()).select_from(self._model)
@@ -223,8 +224,9 @@ class BaseRepository(ABC, Generic[T]):
         if filters:
             query = self._apply_filters(query, filters)
 
-        result = await self._session.execute(query)
-        return result.scalar() or 0
+        async with self.get_session() as session:
+            result = await session.execute(query)
+            return result.scalar() or 0
 
     async def exists(self, filters: list[Filter]) -> bool:
         query = select(1)
@@ -232,11 +234,11 @@ class BaseRepository(ABC, Generic[T]):
         query = self._apply_filters(query, filters)
         query = query.limit(1)
 
-        result = await self._session.execute(query)
-        return result.first() is not None
+        async with self.get_session() as session:
+            result = await session.execute(query)
+            return result.first() is not None
 
-    def _apply_filters(self, query: Select, filters: List[Filter]) -> Select:
-        """Apply filters to query"""
+    def _apply_filters(self, query: Select| Update | Delete, filters: list[Filter]) -> Select| Update | Delete:
         conditions = []
 
         for filter_item in filters:
@@ -331,5 +333,11 @@ class BaseRepository(ABC, Generic[T]):
 
     async def raw_query(self, query: str, params: dict[str, Any] | None = None) -> Any:
         from sqlalchemy import text
-        result = await self._session.execute(text(query), params or {})
-        return result
+        async with self.get_session() as session:
+            result = await session.execute(text(query), params or {})
+            return result
+
+    @asynccontextmanager
+    async def get_session(self):
+        async with self._db_config.session() as session:
+            yield session

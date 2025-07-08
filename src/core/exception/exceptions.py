@@ -29,11 +29,11 @@ class DomainException(Exception):
 
     def as_dict(self) -> dict[str, Any]:
         r = {
-            "error": self.type(),
-            "errorNo": self.errorNo,
-            "message": self.message,
-            "code": self.code(),
-            "stack": self.traceback if self.traceback else self.tracestack,
+            "status": self.code(),
+            "title":  self.type(),
+            "detail": self.message,
+            "code": self.errorNo,
+            "source": {"traceback":self.traceback},
         }
 
         return r
@@ -61,3 +61,24 @@ class FailedException(DomainException):
 
     def code(self) -> int:
         return 422
+
+class UnauthorizedException(DomainException):
+    def type(self) -> str:
+        return "unauthorized"
+
+    def code(self) -> int:
+        return 401
+
+class UnprocessableEntityException(DomainException):
+    def type(self) -> str:
+        return "unprocessable"
+
+    def code(self) -> int:
+        return 422
+
+class ForbiddenException(DomainException):
+    def type(self) -> str:
+        return "forbidden"
+
+    def code(self) -> int:
+        return 403

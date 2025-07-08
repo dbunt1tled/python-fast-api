@@ -1,7 +1,7 @@
+from collections.abc import AsyncGenerator
 from contextlib import asynccontextmanager
-from typing import AsyncGenerator
 
-import aiomysql  # type: ignore 
+import aiomysql  # type: ignore
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
 from sqlalchemy.pool import StaticPool
 
@@ -31,7 +31,7 @@ class MyDatabaseConfig:
         )
 
     @asynccontextmanager
-    async def session(self) -> AsyncGenerator[AsyncSession, None]:
+    async def session(self) -> AsyncGenerator[AsyncSession]:
         async with self.async_session_factory() as session:
             try:
                 yield session

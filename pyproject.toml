@@ -7,13 +7,16 @@ requires-python = ">=3.13"
 dependencies = [
     "aiomysql>=0.2.0",
     "alembic>=1.16.2",
+    "argon2-cffi>=25.1.0",
     "asyncio>=3.4.3",
+    "cryptography>=45.0.5",
     "dependency-injector>=4.48.1",
     "fastapi>=0.115.14",
     "greenlet>=3.2.3",
     "psutil>=7.0.0",
     "pydantic>=2.11.7",
     "pydantic-settings>=2.10.1",
+    "pyjwt>=2.10.1",
     "sqlalchemy>=2.0.41",
     "uvicorn>=0.35.0",
 ]
@@ -31,10 +34,50 @@ dev = [
     "mypy>=1.16.1",
     "ruff>=0.12.1",
     "sqlalchemy2-stubs>=0.0.2a38",
+    "types-pyjwt>=1.7.1",
 ]
 [tool.ruff]
-target-version = "py38"
+# Exclude a variety of commonly ignored directories.
+exclude = [
+    ".bzr",
+    ".direnv",
+    ".eggs",
+    ".git",
+    ".git-rewrite",
+    ".hg",
+    ".ipynb_checkpoints",
+    ".mypy_cache",
+    ".nox",
+    ".pants.d",
+    ".pyenv",
+    ".pytest_cache",
+    ".pytype",
+    ".ruff_cache",
+    ".svn",
+    ".tox",
+    ".venv",
+    ".vscode",
+    "__pypackages__",
+    "_build",
+    "buck-out",
+    "build",
+    "dist",
+    "node_modules",
+    "site-packages",
+    "venv",
+]
+
+# Same as Black.
 line-length = 120
+indent-width = 4
+
+target-version = "py313"
+
+[tool.ruff.lint]
+
+fixable = ["ALL"]
+unfixable = []
+
 select = [
     "E",  # pycodestyle errors
     "W",  # pycodestyle warnings
@@ -49,12 +92,15 @@ ignore = [
     "B008",  # do not perform function calls in argument defaults
 ]
 
-[tool.ruff.per-file-ignores]
+[tool.ruff.lint.per-file-ignores]
 "tests/*" = ["S101", "PLR2004", "ANN"]
 "__init__.py" = ["F401"]
 
 [tool.ruff.format]
 quote-style = "double"
+indent-style = "space"
+line-ending = "auto"
+docstring-code-line-length = "dynamic"
 
 [tool.black]
 line-length = 120
@@ -67,18 +113,16 @@ warn_unused_configs = true
 disallow_untyped_defs = true
 
 [tool.pylint]
-# Основные настройки
-py-version = "3.9"
-jobs = 0  # Использовать все доступные CPU ядра
+py-version = "3.13"
+jobs = 0
 suggestion-mode = true
 
 [tool.pylint.main]
-# Пути для анализа
 analyse-fallback-blocks = false
 clear-cache-post-run = false
 extension-pkg-allow-list = []
 extension-pkg-whitelist = []
-fail-under = 8.0  # Минимальный рейтинг для успешного завершения
+fail-under = 8.0
 ignore = ["CVS", ".git", "__pycache__", ".pytest_cache"]
 ignore-paths = [
     "^tests/.*$",
@@ -108,7 +152,6 @@ source-roots = ["src", "."]
 unsafe-load-any-extension = false
 
 [tool.pylint.messages_control]
-# Отключенные проверки
 disable = [
     "raw-checker-failed",
     "bad-inline-option",
@@ -118,42 +161,32 @@ disable = [
     "useless-suppression",
     "deprecated-pragma",
     "use-symbolic-message-instead",
-    "missing-module-docstring",  # Не всегда нужны docstring для модулей
-    "missing-class-docstring",   # Не всегда нужны docstring для классов
-    "missing-function-docstring", # Не всегда нужны docstring для функций
-    "line-too-long",            # Обрабатывается black/ruff
-    "fixme",                    # TODO/FIXME комментарии - это нормально
-    "import-outside-toplevel",  # Иногда нужны динамические импорты
-    "too-few-public-methods",   # Иногда классы служат как контейнеры
-    "duplicate-code",           # Может быть ложноположительным
-    "argument-naming-style",    # Не всегда нужно назвать аргументы
-    "attribute-naming-style",   # Не всегда нужно назвать атрибуты
-    "variable-naming-style",    # Не всегда нужно назвать переменные
-    "method-naming-style",      # Не всегда нужно назвать методы
-    "module-naming-style",      # Не всегда нужно назвать модули
-    "function-naming-style",    # Не всегда нужно назвать функции
+    "missing-module-docstring",
+    "missing-class-docstring",
+    "missing-function-docstring",
+    "line-too-long",
+    "fixme",
+    "import-outside-toplevel",
+    "too-few-public-methods",
+    "duplicate-code",
 ]
 
-# Включенные проверки
 enable = [
     "c-extension-no-member",
     "useless-suppression",
 ]
 
 [tool.pylint.reports]
-# Настройки отчетов
 evaluation = "max(0, 0 if fatal else 10.0 - ((float(5 * error + warning + refactor + convention) / statement) * 10))"
 msg-template = "{path}:{line}:{column}: {msg_id}: {msg} ({symbol})"
 reports = false
 score = true
 
 [tool.pylint.refactoring]
-# Рефакторинг
 max-nested-blocks = 5
 never-returning-functions = ["sys.exit", "argparse.parse_error"]
 
 [tool.pylint.basic]
-# Соглашения по именованию
 argument-naming-style = "snake_case"
 attr-naming-style = "snake_case"
 bad-names = ["foo", "bar", "baz", "toto", "tutu", "tata"]
@@ -175,7 +208,6 @@ property-classes = ["abc.abstractproperty"]
 variable-naming-style = "snake_case"
 
 [tool.pylint.format]
-# Форматирование
 expected-line-ending-format = "LF"
 ignore-long-lines = "^\\s*(# )?<?https?://\\S+>?$"
 indent-after-paren = 4
@@ -186,16 +218,13 @@ single-line-class-stmt = false
 single-line-if-stmt = false
 
 [tool.pylint.logging]
-# Логирование
 logging-format-style = "new"
 logging-modules = ["logging"]
 
 [tool.pylint.miscellaneous]
-# Разное
 notes = ["FIXME", "XXX", "TODO"]
 
 [tool.pylint.similarities]
-# Поиск дублирования кода
 ignore-comments = true
 ignore-docstrings = true
 ignore-imports = true
@@ -203,12 +232,10 @@ ignore-signatures = true
 min-similarity-lines = 4
 
 [tool.pylint.spelling]
-# Проверка орфографии (если нужно)
 max-spelling-suggestions = 4
 spelling-ignore-comment-directives = "fmt: off,fmt: on,noqa:,noqa,nosec,isort:skip,mypy:"
 
 [tool.pylint.string]
-# Строки
 check-quote-consistency = false
 check-str-concat-over-line-jumps = false
 
@@ -260,7 +287,6 @@ min-public-methods = 1
 overgeneral-exceptions = ["BaseException", "Exception"]
 
 [tool.pylint.imports]
-# Imports
 allow-any-import-level = []
 allow-wildcard-with-all = false
 deprecated-modules = []
