@@ -1,6 +1,6 @@
 from fastapi import APIRouter
 
-from src.app.auth.model.dto import LoginRequest, AccessApp
+from src.app.auth.model.dto import AccessApp, LoginRequest
 from src.app.user.data.user_status import UserStatus
 from src.core.db.repository import Filter, FilterOperator
 from src.core.exception.error_no import ErrorNo

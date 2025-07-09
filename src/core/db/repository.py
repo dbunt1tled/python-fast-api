@@ -6,7 +6,7 @@ from enum import Enum
 from typing import Any, Generic, TypeVar
 
 from sqlalchemy import and_, delete, func, select, update
-from sqlalchemy.sql import Select, Update, Delete
+from sqlalchemy.sql import Delete, Select, Update
 
 from src.core.db.asmysql import MyDatabaseConfig
 from src.core.db.entity import Entity

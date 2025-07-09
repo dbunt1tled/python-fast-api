@@ -1,4 +1,5 @@
-from typing import Any, Sequence
+from collections.abc import Sequence
+from typing import Any
 
 from src.app.user.model.user import User
 from src.app.user.repository.user_repository import UserRepository
@@ -8,7 +9,7 @@ from src.core.db.repository import Filter, OrderBy, Pagination
 class UserService:
     def __init__(self, user_repository: UserRepository) -> None:
         self.user_repository = user_repository
-    
+
     async def get_by_id(self, id_value: int) -> User:
         return await self.user_repository.get_by_id(id_value=id_value)
 

@@ -1,5 +1,3 @@
-
-
 from src.app.user.model.user import User
 from src.core.db.asmysql import MyDatabaseConfig
 from src.core.db.repository import BaseRepository

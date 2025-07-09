@@ -2,6 +2,7 @@ from typing import Any
 
 from pydantic import BaseModel
 
+
 class JsonApiResource(BaseModel):
     type: str
     id: str
