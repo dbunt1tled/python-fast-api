@@ -33,6 +33,15 @@ class LoginRequest(BaseModel):
     )
 
 class AccessApp(BaseModel):
+    model_config = ConfigDict(
+        extra="ignore",
+        alias_generator=AliasGenerator(
+            alias=to_camel,
+            validation_alias=to_camel,
+            serialization_alias=to_camel,
+        ),
+        populate_by_name=True,
+    )
     id: int
     access_token: str
     access_token_exp: datetime

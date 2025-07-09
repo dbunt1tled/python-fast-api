@@ -1,7 +1,8 @@
 from typing import Any
+
 from pydantic_core import ErrorDetails
 
-from src.core.http.response.response import JsonApiError, JsonApiResponse, JsonApiResource
+from src.core.http.response.response import JsonApiError, JsonApiResource, JsonApiResponse
 
 
 class JsonAPIService:
@@ -62,7 +63,7 @@ class JsonAPIService:
         return JsonApiResource(
             type=str(resource_type),
             id=str(data.id if hasattr(data, "id") else ""),
-            attributes= data.to_dict() if hasattr(data, "to_dict") else data.model_dump() if hasattr(data, "model_dump") else data
+            attributes= data.to_dict(camel=True) if hasattr(data, "to_dict") else data.model_dump(by_alias=True) if hasattr(data, "model_dump") else data
         )
 
     @staticmethod

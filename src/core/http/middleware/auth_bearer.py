@@ -52,7 +52,7 @@ class AuthBearer(BaseHTTPMiddleware):
         if not payload:
             raise UnauthorizedException(error_no=ErrorNo.AUTHORIZATION_BEARER_TOKEN_INVALID_OR_EXPIRED, message="Unauthorized!")
 
-        user = await self.user_service.get_by_id(payload.get("user_id"))
+        user = await self.user_service.get_by_id(int(payload.get("sub")))
         if not user or not user.status == UserStatus.ACTIVE:
             raise UnauthorizedException(error_no=ErrorNo.AUTHORIZATION_USER_NOT_FOUND, message="Unauthorized!")
         request.state.user = user

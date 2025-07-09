@@ -13,6 +13,7 @@ from src.core.exception.error_no import ErrorNo
 from src.core.exception.exceptions import DomainException
 from src.core.http.controller import BaseController
 from src.core.http.controller_manager import ControllerManager
+from src.core.http.middleware.auth_bearer import AuthBearer
 from src.core.http.response.json_api import JsonAPIService
 from src.core.http.response.response import JsonApiResponse
 
@@ -64,11 +65,11 @@ app.add_middleware(
         "X-User-Role",
     ],
 )
-# app.add_middleware(
-#     AuthBearer,
-#     hash_service=di.hash_service(),
-#     user_service=di.user_service(),
-# )
+app.add_middleware(
+    AuthBearer,
+    hash_service=di.hash_service(),
+    user_service=di.user_service(),
+)
 
 @app.exception_handler(Exception)
 async def exception_handler(request: Request, e: Exception) -> JSONResponse:
@@ -90,5 +91,5 @@ async def exception_handler(request: Request, e: Exception) -> JSONResponse:
         )
     return JSONResponse(
         status_code=error.errors[0]["status"],
-        content=error.model_dump(),
+        content=error.model_dump(exclude_none=True),
     )

@@ -39,7 +39,7 @@ class HashService:
     def create_access_token(self, user: User) -> Token:
         exp = datetime.now() + timedelta(hours=self.jwt_access_token_exp_h)
         payload = {
-            "sub": user.id,
+            "sub": str(user.id),
             "type": TokenType.ACCESS,
             "exp": int(exp.timestamp()),
         }
@@ -55,7 +55,7 @@ class HashService:
     def create_refresh_token(self, user: User) -> Token:
         exp = datetime.now() + timedelta(hours=self.jwt_refresh_token_exp_h)
         payload = {
-            "sub": user.id,
+            "sub": str(user.id),
             "type": TokenType.REFRESH,
             "exp": int(exp.timestamp()),
         }
@@ -87,7 +87,9 @@ class HashService:
                 }
             )
             return payload
-        except jwt.ExpiredSignatureError:
+        except jwt.ExpiredSignatureError as e:
+            print(e)
             return None
-        except jwt.InvalidTokenError:
+        except jwt.InvalidTokenError as e:
+            print(e)
             return None

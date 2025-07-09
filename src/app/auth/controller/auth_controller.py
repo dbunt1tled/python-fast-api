@@ -1,17 +1,12 @@
 from fastapi import APIRouter
 
-from src.app.auth.controller.model.dto import LoginRequest, AccessApp
-from src.app.user.data.role import Role
+from src.app.auth.model.dto import LoginRequest, AccessApp
 from src.app.user.data.user_status import UserStatus
-from src.app.user.model.dto import UserCreateRequest
-from src.app.user.model.user import User
-from src.app.user.service.user_service import UserService
 from src.core.db.repository import Filter, FilterOperator
 from src.core.exception.error_no import ErrorNo
-from src.core.exception.exceptions import UnprocessableEntityException, UnauthorizedException
+from src.core.exception.exceptions import UnauthorizedException
 from src.core.http.controller import BaseController
 from src.core.http.response.json_api import JsonAPIService
-from src.core.service.hash import HashService
 
 
 class AuthController(BaseController):
