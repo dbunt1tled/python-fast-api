@@ -3,6 +3,7 @@ from sqlalchemy.orm import Mapped, mapped_column
 from sqlalchemy.sql import func
 
 from src.app.user.data.user_status import UserStatus
+from src.core.db.decorator.int_enum import IntEnum
 from src.core.db.entity import Entity
 
 
@@ -13,8 +14,9 @@ class User(Entity):
     first_name: Mapped[str] = mapped_column(String(70), nullable=False)
     second_name: Mapped[str] = mapped_column(String(70), nullable=False)
     email: Mapped[str] = mapped_column(String(100), unique=True, nullable=False)
-    status: Mapped[UserStatus] = mapped_column(Integer, nullable=False, default=UserStatus.PENDING)
-    hash: Mapped[str] = mapped_column(String(150), unique=True, nullable=False)
+    status: Mapped[UserStatus] = mapped_column(IntEnum(UserStatus), nullable=False, default=UserStatus.PENDING)
+    hash_password: Mapped[str] = mapped_column(String(150), nullable=False)
+    session: Mapped[str] = mapped_column(String(50), nullable=True)
     roles: Mapped[list] = mapped_column(JSON, nullable=False, default=list)
     updated_at: Mapped[DateTime] = mapped_column(
         DateTime(timezone=True),

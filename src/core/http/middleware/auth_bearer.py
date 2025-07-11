@@ -1,3 +1,5 @@
+import logging
+
 from fastapi.security import HTTPBearer
 from starlette.middleware.base import BaseHTTPMiddleware, RequestResponseEndpoint
 from starlette.requests import Request
@@ -18,7 +20,9 @@ class AuthBearer(BaseHTTPMiddleware):
         "/openapi.json",
         "/auth/login",
         "/auth/refresh",
-        "/auth/register",
+        "/auth/signup",
+        "/auth/re-send-confirm-email",
+        "/auth/confirm-email",
         "/health"
     ]
 
@@ -32,6 +36,7 @@ class AuthBearer(BaseHTTPMiddleware):
         self.hash_service = hash_service
         self.user_service = user_service
         self.bearer_scheme = HTTPBearer(auto_error=False)
+        self.logger = logging.getLogger(__name__)
 
     async def dispatch(self, request: Request, call_next: RequestResponseEndpoint) -> Response:
         if AuthBearer._is_excluded_path(request.url.path):
@@ -45,16 +50,22 @@ class AuthBearer(BaseHTTPMiddleware):
             scheme, token = authorization.split(" ", 1)
             if scheme.lower() != "bearer":
                 raise UnauthorizedException(error_no=ErrorNo.AUTHORIZATION_BEARER_FORMAT_ERROR, message="Unauthorized!")
-        except ValueError:
+        except ValueError as e:
+            self.logger.error(str(e), exc_info=e)
             raise UnauthorizedException(error_no=ErrorNo.AUTHORIZATION_BEARER_INVALID, message="Unauthorized!")
 
         payload = self.hash_service.verify_token(token)
         if not payload:
             raise UnauthorizedException(error_no=ErrorNo.AUTHORIZATION_BEARER_TOKEN_INVALID_OR_EXPIRED, message="Unauthorized!")
 
-        user = await self.user_service.get_by_id(int(payload.get("sub")))
-        if not user or not user.status == UserStatus.ACTIVE:
+        user = await self.user_service.get_by_id(int(payload.subject))
+        if not user:
             raise UnauthorizedException(error_no=ErrorNo.AUTHORIZATION_USER_NOT_FOUND, message="Unauthorized!")
+        if user.status != UserStatus.ACTIVE:
+            raise UnauthorizedException(error_no=ErrorNo.AUTHORIZATION_USER_NOT_ACTIVE, message="Unauthorized!")
+        if user.session != payload.session:
+            raise UnauthorizedException(error_no=ErrorNo.AUTHORIZATION_USER_SESSION_INVALID, message="Unauthorized!")
+
         request.state.user = user
         request.state.is_authenticated = True
 

@@ -1,21 +1,12 @@
-from pydantic import AliasGenerator, BaseModel, ConfigDict, Field
-from pydantic.alias_generators import to_camel
+from pydantic import Field
 
 from src.app.user.data.role import Role
 from src.app.user.data.user_status import UserStatus
+from src.app.user.model.user import User
+from src.core.dto.dto import DTO
 
 
-class UserBase(BaseModel):
-    model_config = ConfigDict(
-        extra="ignore",
-        alias_generator=AliasGenerator(
-            alias=to_camel,
-            validation_alias=to_camel,
-            serialization_alias=to_camel,
-        ),
-        populate_by_name=True
-    )
-
+class UserBase(DTO):
     first_name: str = Field(
         ...,
         min_length=3,
@@ -58,5 +49,12 @@ class UserBase(BaseModel):
 
 
 class UserCreateRequest(UserBase):
-    pass
 
+    def to_user(self) -> User:
+        return User(
+            first_name=self.first_name,
+            second_name=self.second_name,
+            email=self.email,
+            status=UserStatus.PENDING,
+            roles=self.roles or [Role.USER],
+        )

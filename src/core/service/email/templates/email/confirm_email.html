@@ -1,0 +1,13 @@
+<html>
+<head>
+    <title>Confirm Email</title>
+</head>
+<body>
+<h1>Please confirm your email</h1>
+<p>Dear {{ user.first_name }},</p>
+<p>
+    Please click the following link to confirm your email:
+    <a href="{{ url('/auth/confirm-email', {'token': token}) }}">Confirm Email</a>
+</p>
+</body>
+</html>

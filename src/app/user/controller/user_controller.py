@@ -1,14 +1,12 @@
 from fastapi import APIRouter
 
-from src.app.user.data.role import Role
-from src.app.user.data.user_status import UserStatus
-from src.app.user.model.dto import UserCreateRequest
-from src.app.user.model.user import User
+from src.app.user.dto.user import UserCreateRequest
 from src.core.db.repository import Filter, FilterOperator
 from src.core.exception.error_no import ErrorNo
 from src.core.exception.exceptions import UnprocessableEntityException
 from src.core.http.controller import BaseController
 from src.core.http.response.json_api import JsonAPIService
+from src.core.http.response.response import JsonApiResponse
 
 
 class UserController(BaseController):
@@ -27,16 +25,16 @@ class UserController(BaseController):
         u = await self.container.user_service().user_service().all()
         return u
 
-    async def get_user(self, user_id: int):
+    async def get_user(self, user_id: int) -> JsonApiResponse:
         user = await self.container.user_service().get_by_id(user_id)
         return JsonAPIService.response(data=user)
 
     async def create_user(
             self,
-            user_request: UserCreateRequest
-    ):
+            req: UserCreateRequest
+    ) -> JsonApiResponse:
         user = await self.container.user_service().one(filters=[
-            Filter("email", FilterOperator.EQ, user_request.email),
+            Filter("email", FilterOperator.EQ, req.email),
         ])
         if user is not None:
             raise UnprocessableEntityException(
@@ -44,14 +42,9 @@ class UserController(BaseController):
                 message="User already exists"
             )
 
-        user = User(
-            first_name=user_request.first_name,
-            second_name=user_request.second_name,
-            email=user_request.email,
-            hash=self.container.hash_service().hash_password(user_request.password),
-            status=UserStatus.PENDING,
-            roles=[Role.ADMIN],
-        )
+        user = req.to_user()
+        user.session = self.container.hash_service().random_string()
+        user.hash_password = self.container.hash_service().hash_password(req.password)
         user = await self.container.user_service().create(data=user)
 
         return JsonAPIService.response(data=user)

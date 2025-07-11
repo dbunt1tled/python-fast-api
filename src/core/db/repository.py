@@ -142,6 +142,7 @@ class BaseRepository(ABC, Generic[T]):
             if hasattr(entity, field):
                 setattr(entity, field, value)
         async with self.get_session() as session:
+            session.add(entity)
             await session.flush()
             await session.refresh(entity)
             return entity
