@@ -1,7 +1,7 @@
 from fastapi import APIRouter
 
 from src.app.user.dto.user import UserCreateRequest
-from src.core.db.repository import Filter, FilterOperator
+from src.core.db.repository import Filter, FilterOperator, Pagination
 from src.core.exception.error_no import ErrorNo
 from src.core.exception.exceptions import UnprocessableEntityException
 from src.core.http.controller import BaseController
@@ -22,8 +22,18 @@ class UserController(BaseController):
         self.router.get("/{user_id}")(self.get_user)
 
     async def get_users(self):
-        u = await self.container.user_service().user_service().all()
-        return u
+        users = await self.container.user_service().all(
+            filters=[
+                Filter("email", FilterOperator.EQ, "dev.dbv+11@gmail.com"),
+            ],
+            pagination=Pagination(
+                limit=10,
+                offset=0,
+                is_paginated=True,
+            )
+        )
+
+        return JsonAPIService.response(data=users)
 
     async def get_user(self, user_id: int) -> JsonApiResponse:
         user = await self.container.user_service().get_by_id(user_id)

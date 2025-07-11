@@ -1,7 +1,8 @@
-from typing import Any
+from typing import Any, Sequence
 
 from pydantic_core import ErrorDetails
 
+from src.core.db.repository import Paginator
 from src.core.http.response.response import JsonApiError, JsonApiResource, JsonApiResponse
 
 
@@ -25,17 +26,31 @@ class JsonAPIService:
                 errors=[error.model_dump() if hasattr(error, "model_dump") else error for error in errors],
                 meta=meta,
             )
-
-        if not isinstance(data, list):
-            resource = JsonAPIService._data_to_resource(data, resource_type)
-            return JsonApiResponse(data=resource, meta=meta)
-
-        resources = []
-        for item in data:
-            resource = JsonAPIService._data_to_resource(item, resource_type)
-            resources.append(resource)
+        resources: list[JsonApiResource] | JsonApiResource = []
+        if isinstance(data, Paginator):
+            resources = JsonAPIService.map_items(data.items)
+            meta = {
+                "total": data.total,
+                "page": data.page,
+                "per_page": data.per_page,
+                "total_pages": data.pages,
+            }
+        elif isinstance(data, list):
+            resources = JsonAPIService.map_items(data)
+        else:
+            resources = JsonAPIService._data_to_resource(data, resource_type)
 
         return JsonApiResponse(data=resources, meta=meta)
+
+    @staticmethod
+    def map_items(data : list|  Sequence[Any]) -> list[JsonApiResource]:
+        resources = []
+        resource_type = ""
+        if len(data) > 0:
+            resource_type = data[0].__class__.__name__
+        for item in data:
+            resources.append(JsonAPIService._data_to_resource(item, resource_type))
+        return resources
 
     @staticmethod
     def error(

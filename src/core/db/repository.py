@@ -74,6 +74,7 @@ class OrderBy:
 class Pagination:
     limit: int | None = None
     offset: int | None = None
+    is_paginated: bool = False
 
     @property
     def page(self) -> int | None:
@@ -81,6 +82,16 @@ class Pagination:
             return None
         return (self.offset // self.limit) + 1
 
+class Paginator(Generic[T]):
+    def __init__(self, items: Sequence[T], total: int, page: int, per_page: int):
+        self.items = items
+        self.total = total
+        self.page = page
+        self.per_page = per_page
+
+    @property
+    def pages(self) -> int:
+        return (self.total + self.per_page - 1) // self.per_page
 
 class BaseRepository(ABC, Generic[T]):
     def __init__(
@@ -182,7 +193,7 @@ class BaseRepository(ABC, Generic[T]):
             filters: list[Filter] | None = None,
             order_by: list[OrderBy] | None = None,
             pagination: Pagination | None = None,
-    ) -> Sequence[T]:
+    ) -> Sequence[T] | Paginator[T]:
         query = select(self._model)
 
         if filters:
@@ -196,6 +207,20 @@ class BaseRepository(ABC, Generic[T]):
                 query = query.limit(pagination.limit)
             if pagination.offset is not None:
                 query = query.offset(pagination.offset)
+            if pagination.is_paginated:
+                count_query = select(func.count()).select_from(query.subquery())
+                async with self.get_session() as session:
+                    total_result = await session.execute(count_query)
+                    total = total_result.scalar_one()
+                    result = await session.execute(query)
+                    items = result.scalars().all()
+                    return Paginator(
+                        items=items,
+                        total=total,
+                        page=pagination.page or 1,
+                        per_page=pagination.limit or total,
+                    )
+
         async with self.get_session() as session:
             result = await session.execute(query)
             return result.scalars().all()
