@@ -71,16 +71,27 @@ class OrderBy:
 
 
 @dataclass
-class Pagination:
+class Pager:
     limit: int | None = None
     offset: int | None = None
-    is_paginated: bool = False
 
     @property
     def page(self) -> int | None:
         if self.offset is None or self.limit is None or self.limit == 0:
             return None
         return (self.offset // self.limit) + 1
+
+@dataclass
+class Pagination:
+    page: int = 1
+    per_page: int = 10
+
+    @property
+    def offset(self) -> int | None:
+        if self.page is None or self.per_page is None or self.page == 0 or self.per_page == 0:
+            return None
+
+        return (self.page - 1) * self.per_page
 
 class Paginator(Generic[T]):
     def __init__(self, items: Sequence[T], total: int, page: int, per_page: int):
@@ -193,6 +204,7 @@ class BaseRepository(ABC, Generic[T]):
             filters: list[Filter] | None = None,
             order_by: list[OrderBy] | None = None,
             pagination: Pagination | None = None,
+            pager: Pager | None = None,
     ) -> Sequence[T] | Paginator[T]:
         query = select(self._model)
 
@@ -202,24 +214,28 @@ class BaseRepository(ABC, Generic[T]):
         if order_by:
             query = self._apply_ordering(query, order_by)
 
-        if pagination:
-            if pagination.limit is not None:
-                query = query.limit(pagination.limit)
+        if pagination is not None:
+            count_query = select(func.count()).select_from(query.subquery())
+            if pagination.per_page is not None:
+                query = query.limit(pagination.per_page)
             if pagination.offset is not None:
                 query = query.offset(pagination.offset)
-            if pagination.is_paginated:
-                count_query = select(func.count()).select_from(query.subquery())
-                async with self.get_session() as session:
-                    total_result = await session.execute(count_query)
-                    total = total_result.scalar_one()
-                    result = await session.execute(query)
-                    items = result.scalars().all()
-                    return Paginator(
-                        items=items,
-                        total=total,
-                        page=pagination.page or 1,
-                        per_page=pagination.limit or total,
-                    )
+            async with self.get_session() as session:
+                total_result = await session.execute(count_query)
+                total = total_result.scalar_one()
+                result = await session.execute(query)
+                items = result.scalars().all()
+                return Paginator(
+                    items=items,
+                    total=total,
+                    page=pagination.page or 1,
+                    per_page=pagination.per_page or total,
+                )
+        elif pager is not None:
+            if pager.limit is not None:
+                query = query.limit(pager.limit)
+            if pager.offset is not None:
+                query = query.offset(pager.offset)
 
         async with self.get_session() as session:
             result = await session.execute(query)
@@ -270,33 +286,38 @@ class BaseRepository(ABC, Generic[T]):
         for filter_item in filters:
             field = getattr(self._model, filter_item.field)
 
-            if filter_item.operator == FilterOperator.EQ:
-                conditions.append(field == filter_item.value)
-            elif filter_item.operator == FilterOperator.NE:
-                conditions.append(field != filter_item.value)
-            elif filter_item.operator == FilterOperator.GT:
-                conditions.append(field > filter_item.value)
-            elif filter_item.operator == FilterOperator.LT:
-                conditions.append(field < filter_item.value)
-            elif filter_item.operator == FilterOperator.GTE:
-                conditions.append(field >= filter_item.value)
-            elif filter_item.operator == FilterOperator.LTE:
-                conditions.append(field <= filter_item.value)
-            elif filter_item.operator == FilterOperator.LIKE:
-                conditions.append(field.like(filter_item.value))
-            elif filter_item.operator == FilterOperator.ILIKE:
-                conditions.append(field.ilike(filter_item.value))
-            elif filter_item.operator == FilterOperator.IN:
-                conditions.append(field.in_(filter_item.value))
-            elif filter_item.operator == FilterOperator.NOT_IN:
-                conditions.append(~field.in_(filter_item.value))
-            elif filter_item.operator == FilterOperator.BETWEEN:
-                conditions.append(field.between(filter_item.value[0], filter_item.value[1]))
-            elif filter_item.operator == FilterOperator.IS_NULL:
+            if filter_item.operator == FilterOperator.IS_NULL:
                 conditions.append(field.is_(None))
             elif filter_item.operator == FilterOperator.IS_NOT_NULL:
                 conditions.append(field.is_not(None))
-            elif filter_item.operator == FilterOperator.CONTAINS:
+
+
+            if filter_item.value is not None:
+                if filter_item.operator == FilterOperator.EQ:
+                    conditions.append(field == filter_item.value)
+                elif filter_item.operator == FilterOperator.NE:
+                    conditions.append(field != filter_item.value)
+                elif filter_item.operator == FilterOperator.GT:
+                    conditions.append(field > filter_item.value)
+                elif filter_item.operator == FilterOperator.LT:
+                    conditions.append(field < filter_item.value)
+                elif filter_item.operator == FilterOperator.GTE:
+                    conditions.append(field >= filter_item.value)
+                elif filter_item.operator == FilterOperator.LTE:
+                    conditions.append(field <= filter_item.value)
+                elif filter_item.operator == FilterOperator.LIKE:
+                    conditions.append(field.like(filter_item.value))
+                elif filter_item.operator == FilterOperator.ILIKE:
+                    conditions.append(field.ilike(filter_item.value))
+                elif filter_item.operator == FilterOperator.IN:
+                    conditions.append(field.in_(filter_item.value))
+                elif filter_item.operator == FilterOperator.NOT_IN:
+                    conditions.append(~field.in_(filter_item.value))
+                elif filter_item.operator == FilterOperator.BETWEEN:
+                    conditions.append(field.between(filter_item.value[0], filter_item.value[1]))
+
+
+            if filter_item.operator == FilterOperator.CONTAINS:
                 conditions.append(field.contains(filter_item.value))
             elif filter_item.operator == FilterOperator.STARTSWITH:
                 conditions.append(field.startswith(filter_item.value))

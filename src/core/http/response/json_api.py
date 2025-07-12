@@ -32,8 +32,8 @@ class JsonAPIService:
             meta = {
                 "total": data.total,
                 "page": data.page,
-                "per_page": data.per_page,
-                "total_pages": data.pages,
+                "perPage": data.per_page,
+                "totalPages": data.pages,
             }
         elif isinstance(data, list):
             resources = JsonAPIService.map_items(data)
