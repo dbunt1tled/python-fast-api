@@ -1,7 +1,10 @@
+
 from fastapi import Request
-from typing import cast
+
+from src.core.http.request.state import State, get_state
+
 
 class ApiRequest(Request):
-    @property
-    def state(self) -> StateProtocol:
-        return cast(StateProtocol, super().state)
+
+    def data(self) -> State:
+        return get_state(self)

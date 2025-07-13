@@ -84,3 +84,12 @@ class UserResponse(BaseModelResponse):
                 relationship_type=RelationshipType.HAS_MANY
             )
         }
+
+    # relationship on by own
+    # RelationshipConfig(
+    #     name="User",
+    #     service_name="user_service",
+    #     foreign_key="id",
+    #     local_key="user_id",
+    #     relationship_type=RelationshipType.BELONGS_TO
+    # )
