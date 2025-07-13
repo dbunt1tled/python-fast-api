@@ -3,6 +3,8 @@ from dependency_injector import containers, providers
 from src.app.auth.service.auth_service import AuthService
 from src.app.user.repository.user_repository import UserRepository
 from src.app.user.service.user_service import UserService
+from src.app.user_notification.repository.user_notification_repository import UserNotificationRepository
+from src.app.user_notification.service.user_notification_service import UserNotificationService
 from src.core.db.asmysql import MyDatabaseConfig
 from src.core.service.email.app_mail_service import AppMailService
 from src.core.service.email.email_service import EmailService
@@ -51,6 +53,16 @@ class Container(containers.DeclarativeContainer):
         UserService,
         user_repository=user_repository,
     )
+
+    user_notification_repository = providers.Singleton(
+        UserNotificationRepository,
+        db_config=db_config,
+    )
+    user_notification_service = providers.Singleton(
+        UserNotificationService,
+        user_notification_repository=user_notification_repository,
+    )
+
     auth_service = providers.Singleton(
         AuthService,
         user_service=user_service,

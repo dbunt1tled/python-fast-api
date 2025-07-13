@@ -8,6 +8,7 @@ from starlette.responses import JSONResponse
 
 from src.app.auth.controller.auth_controller import AuthController
 from src.app.user.controller.user_controller import UserController
+from src.app.user_notification.controller.user_notification_controller import UserNotificationController
 from src.core.di.container import Container
 from src.core.exception.error_no import ErrorNo
 from src.core.exception.exceptions import DomainException
@@ -30,11 +31,9 @@ async def lifespan(api: FastAPI) -> AsyncGenerator[None]:
     controller_manager = ControllerManager()
     controller_manager.add_controller(UserController())
     controller_manager.add_controller(AuthController())
+    controller_manager.add_controller(UserNotificationController())
     controller_manager.setup_all_dependencies()
     controller_manager.register_routers(api)
-
-    api.state.container = container # type: ignore
-    api.state.controller_manager = controller_manager # type: ignore
 
     yield
 

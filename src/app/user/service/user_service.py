@@ -3,7 +3,7 @@ from typing import Any
 
 from src.app.user.model.user import User
 from src.app.user.repository.user_repository import UserRepository
-from src.core.db.repository import Filter, OrderBy, Pagination
+from src.core.db.repository import Filter, OrderBy, Pager, Pagination, Paginator
 
 
 class UserService:
@@ -34,5 +34,6 @@ class UserService:
             filters: list[Filter] | None = None,
             order_by: list[OrderBy] | None = None,
             pagination: Pagination | None = None,
-    ) -> Sequence[User]:
-        return await self.user_repository.find_all(filters=filters, order_by=order_by, pagination=pagination)
+            pager: Pager | None = None,
+    ) -> Sequence[User] | Paginator[User]:
+        return await self.user_repository.find_all(filters=filters, order_by=order_by, pagination=pagination, pager=pager)

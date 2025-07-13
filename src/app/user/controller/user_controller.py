@@ -1,11 +1,10 @@
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, Request
 
 from src.app.user.dto.user import UserCreateRequest, UserListRequest
 from src.core.db.repository import Filter, FilterOperator, Pagination
 from src.core.exception.error_no import ErrorNo
 from src.core.exception.exceptions import UnprocessableEntityException
 from src.core.http.controller import BaseController
-from src.core.http.response.json_api import JsonAPIService
 from src.core.http.response.response import JsonApiResponse
 
 
@@ -17,11 +16,11 @@ class UserController(BaseController):
         self._setup_routes()
 
     def _setup_routes(self) -> None:
-        self.router.get("")(self.get_users)
-        self.router.post("")(self.create_user)
-        self.router.get("/{user_id}")(self.get_user)
+        self.router.get("")(self.list)
+        self.router.post("")(self.create)
+        self.router.get("/{user_id}")(self.view)
 
-    async def get_users(self, req: UserListRequest = Depends()) -> JsonApiResponse:
+    async def list(self, req: UserListRequest = Depends()) -> JsonApiResponse:
         users = await self.container.user_service().all(
             filters=[
                 Filter("email", FilterOperator.EQ, req.email),
@@ -32,13 +31,13 @@ class UserController(BaseController):
             )
         )
 
-        return JsonAPIService.response(data=users)
+        return await self.api_response.response(data=users, include=req.include)
 
-    async def get_user(self, user_id: int) -> JsonApiResponse:
+    async def view(self, user_id: int, req: Request) -> JsonApiResponse:
         user = await self.container.user_service().get_by_id(user_id)
-        return JsonAPIService.response(data=user)
+        return await self.api_response.response(data=user, include=req.query_params.get("include", None))
 
-    async def create_user(
+    async def create(
             self,
             req: UserCreateRequest,
     ) -> JsonApiResponse:
@@ -56,4 +55,4 @@ class UserController(BaseController):
         user.hash_password = self.container.hash_service().hash_password(req.password)
         user = await self.container.user_service().create(data=user)
 
-        return JsonAPIService.response(data=user)
+        return await self.api_response.response(data=user)

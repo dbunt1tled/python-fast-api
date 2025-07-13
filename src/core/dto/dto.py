@@ -12,6 +12,7 @@ class DTO (BaseModel):
         ),
         populate_by_name=True
     )
+    include: str | None = None
 
 class Message(DTO):
     message: str

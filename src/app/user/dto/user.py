@@ -4,6 +4,7 @@ from src.app.user.data.role import Role
 from src.app.user.data.user_status import UserStatus
 from src.app.user.model.user import User
 from src.core.dto.dto import DTO, Paginated
+from src.core.http.response.response import BaseModelResponse, RelationshipConfig, RelationshipType
 
 
 class UserBase(DTO):
@@ -67,3 +68,19 @@ class UserListRequest(Paginated):
         description="The email of the user",
         examples=["p8t2H@example.com", "Ww5rP@example.com"],
     )
+
+class UserResponse(BaseModelResponse):
+    @property
+    def model_name(self) -> str:
+        return "User"
+
+    @property
+    def relationships(self) -> dict[str, RelationshipConfig]:
+        return {
+            "UserNotification": RelationshipConfig(
+                name="UserNotification",
+                service_name="user_notification_service",
+                foreign_key="user_id",
+                relationship_type=RelationshipType.HAS_MANY
+            )
+        }
