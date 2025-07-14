@@ -1,9 +1,10 @@
 from collections.abc import Sequence
 from typing import Any
 
+from src.app.user_notification.data.user_notification_status import UserNotificationStatus
 from src.app.user_notification.model.user_notification import UserNotification
 from src.app.user_notification.repository.user_notification_repository import UserNotificationRepository
-from src.core.db.repository import Filter, OrderBy, Pager, Pagination, Paginator
+from src.core.db.repository import Filter, OrderBy, Pager, Pagination, Paginator, FilterOperator
 
 
 class UserNotificationService:
@@ -37,3 +38,11 @@ class UserNotificationService:
             pager: Pager | None = None,
     ) -> Sequence[UserNotification] | Paginator[UserNotification]:
         return await self.user_notification_repository.find_all(filters=filters, order_by=order_by, pagination=pagination, pager=pager)
+
+    async def new_by_user_id(self, id_value: int|list[int]) -> Sequence[UserNotification]:
+        return await self.all(  # type: ignore
+            filters=[
+                Filter('user_id', FilterOperator.IN if isinstance(id_value, list) else FilterOperator.EQ, id_value),
+                Filter('status', FilterOperator.EQ, UserNotificationStatus.NEW),
+            ],
+        )

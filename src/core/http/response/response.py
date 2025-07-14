@@ -42,6 +42,7 @@ class RelationshipConfig:
     service_name: str
     foreign_key: str
     local_key: str = "id"
+    service_method: str | None = None
     relationship_type: RelationshipType = RelationshipType.HAS_ONE
     include_in_response: bool = True
 
@@ -112,20 +113,21 @@ class BaseModelResponse(ABC):
 
         service = self.get_service(config.service_name)
 
-        if config.relationship_type == RelationshipType.HAS_MANY:
-            related_data = await service.all(
-                filters=[
-                    Filter(config.foreign_key, FilterOperator.IN, ids),
-                    # Filter("status", FilterOperator.EQ, req.status),
-                ],
-            )
+        if config.service_method:
+            related_data = await getattr(service, config.service_method)(ids)
         else:
-            related_data = await service.all(
-                filters=[
-                    Filter("id", FilterOperator.IN, ids),
-                    # Filter("status", FilterOperator.EQ, req.status),
-                ],
-            )
+            if config.relationship_type == RelationshipType.HAS_MANY:
+                related_data = await service.all(
+                    filters=[
+                        Filter(config.foreign_key, FilterOperator.IN, ids),
+                    ],
+                )
+            else:
+                related_data = await service.all(
+                    filters=[
+                        Filter("id", FilterOperator.IN, ids),
+                    ],
+                )
 
         resources = []
         for item in related_data:
@@ -139,16 +141,17 @@ class BaseModelResponse(ABC):
 
         local_id = getattr(data, config.local_key)
         service = self.get_service(config.service_name)
-
-        if config.relationship_type == RelationshipType.HAS_MANY:
-            related_data = await service.all(
-                filters=[
-                    Filter(config.foreign_key, FilterOperator.EQ, local_id),
-                    # Filter("status", FilterOperator.EQ, req.status),
-                ],
-            )
+        if config.service_method:
+            related_data = await getattr(service, config.service_method)(local_id)
         else:
-            related_data = await service.get_by_id(local_id)
+            if config.relationship_type == RelationshipType.HAS_MANY:
+                related_data = await service.all(
+                    filters=[
+                        Filter(config.foreign_key, FilterOperator.EQ, local_id),
+                    ],
+                )
+            else:
+                related_data = await service.get_by_id(local_id)
 
         if not related_data:
             return []

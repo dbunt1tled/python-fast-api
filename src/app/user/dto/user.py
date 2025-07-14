@@ -80,6 +80,7 @@ class UserResponse(BaseModelResponse):
             "UserNotification": RelationshipConfig(
                 name="UserNotification",
                 service_name="user_notification_service",
+                service_method="new_by_user_id",
                 foreign_key="user_id",
                 relationship_type=RelationshipType.HAS_MANY
             )
