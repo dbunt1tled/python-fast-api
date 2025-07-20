@@ -1,35 +1,33 @@
+import logging
 from abc import ABC
-
-from dependency_injector.wiring import Provide, inject
-from fastapi import APIRouter
+from typing import Any
 
 from src.core.di.container import Container
 from src.core.http.response.api_response_service import ApiResponseService
+from src.core.http.response.response import JsonApiResponse
+from src.core.settings.setting import Settings
 
 
 class BaseController(ABC):
-    def __init__(self, prefix: str = "", tags: list | None = None):
-        self.router = APIRouter(prefix=prefix, tags=tags or [])
-        self._container: Container | None = None
-        self._api_response: ApiResponseService | None = None
+    def __init__(self, container: Container):
+        self.container = container
+        self.api_response_service = ApiResponseService(container=container)
+        self.logger = logging.getLogger(__name__)
 
-    @property
-    def container(self) -> Container:
-        if self._container is None:
-            raise RuntimeError("Container not initialized. Call setup_dependencies first.")
-        return self._container
+    def get_container(self) -> Container:
+        return self.container
 
-    @property
-    def api_response(self) -> ApiResponseService:
-        if self._api_response is None:
-            raise RuntimeError("Container not initialized. Call setup_dependencies first.")
-        return self._api_response
+    def get_api_config(self) -> Settings:
+        return self.container.app_config()
 
-    @inject
-    def setup_dependencies(self, container: Container = Provide[Container]) -> "BaseController":
-        self._container = container
-        self._api_response = ApiResponseService(container)
-        return self
+    def get_logger(self) -> logging.Logger:
+        return self.logger
 
-    def init(self) -> None:
-        pass
+    async def response(
+        self,
+        data: Any | None = None,
+        meta: dict[str, Any] | None = None,
+        resource_type: str | None = None,
+        include: str | None = None
+    ) -> JsonApiResponse:
+        return await self.api_response_service.response(data=data, meta=meta, resource_type=resource_type, include=include)

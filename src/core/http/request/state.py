@@ -1,5 +1,7 @@
 from typing import Protocol, cast
+
 from fastapi import Request
+
 from src.app.user.model.user import User
 from src.core.exception.error_no import ErrorNo
 from src.core.exception.exceptions import UnauthorizedException

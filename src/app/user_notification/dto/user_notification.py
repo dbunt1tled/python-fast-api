@@ -1,12 +1,9 @@
 from pydantic import Field
 
-from src.app.user.data.role import Role
-from src.app.user.data.user_status import UserStatus
-from src.app.user.model.user import User
 from src.app.user_notification.data.user_notification_status import UserNotificationStatus
 from src.app.user_notification.model.user_notification import UserNotification
 from src.core.dto.dto import DTO, Paginated
-from src.core.http.response.response import BaseModelResponse, RelationshipConfig, RelationshipType
+from src.core.http.response.response import RelationshipConfig, RelationshipType, ResponseBaseModel
 
 
 class UserNotificationBase(DTO):
@@ -33,7 +30,7 @@ class UserNotificationListRequest(Paginated):
         examples=["p8t2H@example.com", "Ww5rP@example.com"],
     )
 
-class UserNotificationResponse(BaseModelResponse):
+class UserNotificationResponse(ResponseBaseModel):
     @property
     def model_name(self) -> str:
         return "UserNotification"

@@ -12,8 +12,6 @@ from src.app.user_notification.controller.user_notification_controller import Us
 from src.core.di.container import Container
 from src.core.exception.error_no import ErrorNo
 from src.core.exception.exceptions import DomainException
-from src.core.http.controller import BaseController
-from src.core.http.controller_manager import ControllerManager
 from src.core.http.middleware.auth_bearer import AuthBearer
 from src.core.http.response.json_api import JsonAPIService
 from src.core.http.response.response import JsonApiResponse
@@ -22,19 +20,9 @@ from src.core.http.response.response import JsonApiResponse
 @asynccontextmanager
 async def lifespan(api: FastAPI) -> AsyncGenerator[None]:
     container = Container()
-    container.wire(modules=[
-        __name__,
-        BaseController,
-        AuthController,
-        UserController,
-    ])
-    controller_manager = ControllerManager()
-    controller_manager.add_controller(UserController())
-    controller_manager.add_controller(AuthController())
-    controller_manager.add_controller(UserNotificationController())
-    controller_manager.setup_all_dependencies()
-    controller_manager.register_routers(api)
-
+    AuthController(app=api, container=container)
+    UserController(app=api, container=container)
+    UserNotificationController(app=api, container=container)
     yield
 
     # Shutdown

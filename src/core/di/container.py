@@ -15,29 +15,29 @@ from src.core.settings.setting import Settings
 
 class Container(containers.DeclarativeContainer):
     config = providers.Configuration()
-    cfg = providers.Singleton(Settings)
+    app_config = providers.Singleton(Settings)
     db_config = providers.Singleton(
         MyDatabaseConfig,
-        dsn=cfg.provided.sqlalchemy_database_uri
+        dsn=app_config.provided.sqlalchemy_database_uri
     )
 
     email_service = providers.Singleton(
         EmailService,
-        smtp_server=cfg.provided.smtp_server,
-        smtp_port=cfg.provided.smtp_port,
-        app_password=cfg.provided.app_password,
-        from_email=cfg.provided.from_email,
+        smtp_server=app_config.provided.smtp_server,
+        smtp_port=app_config.provided.smtp_port,
+        app_password=app_config.provided.app_password,
+        from_email=app_config.provided.from_email,
     )
 
     view_service = providers.Singleton(
         ViewService,
         template_dirs="src/core/service/email/templates",
-        app_url=cfg.provided.app_url,
+        app_url=app_config.provided.app_url,
     )
 
     hash_service = providers.Singleton(
         HashService,
-        cfg=cfg
+        cfg=app_config
     )
 
     app_email_service = providers.Singleton(

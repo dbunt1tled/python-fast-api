@@ -17,7 +17,7 @@ class JsonApiResource(BaseModel):
     relationships: dict[str, Any] | None = None
 
 class JsonApiResponse(BaseModel):
-    data: JsonApiResource | list[JsonApiResource] | None = None
+    data: JsonApiResource | list[JsonApiResource] | list[dict[str, Any]] | dict[str, Any] | None = None
     errors: list[dict[str, Any]] | None = None
     meta: dict[str, Any] | None = None
     included: list[JsonApiResource] | None = None
@@ -53,7 +53,7 @@ class IncludeConfig:
     service_method: str
     params: dict[str, Any] | None = None
 
-class BaseModelResponse(ABC):
+class ResponseBaseModel(ABC):
     def __init__(self, container: Container):
         self.container = container
 
@@ -94,7 +94,8 @@ class BaseModelResponse(ABC):
 
         return included
 
-    def _param_to_relationship_name(self, param_name: str) -> str:
+    @staticmethod
+    def _param_to_relationship_name(param_name: str) -> str:
         if param_name.startswith("with"):
             param_name = param_name.replace("with", "").strip("_")
         return param_name
@@ -218,11 +219,9 @@ class BaseModelResponse(ABC):
     def data_to_resource(data: Any, resource_type: str | None = None) -> JsonApiResource:
         if resource_type is None:
             resource_type = data.__class__.__name__
-
         return JsonApiResource(
             type=resource_type,
             id=str(data.id if hasattr(data, "id") else ""),
             attributes=data.to_dict(camel=True) if hasattr(data, "to_dict") else data.model_dump(by_alias=True) if hasattr(data, "model_dump") else data
         )
-
 

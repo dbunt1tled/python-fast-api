@@ -1,7 +1,8 @@
-from fastapi import APIRouter, Depends, Request
+from fastapi import APIRouter, Depends, FastAPI, Request
 
 from src.app.user.dto.user import UserCreateRequest, UserListRequest
 from src.core.db.repository import Filter, FilterOperator, Pagination
+from src.core.di.container import Container
 from src.core.exception.error_no import ErrorNo
 from src.core.exception.exceptions import UnprocessableEntityException
 from src.core.http.controller import BaseController
@@ -10,15 +11,14 @@ from src.core.http.response.response import JsonApiResponse
 
 class UserController(BaseController):
 
-    def __init__(self) -> None:
-        super().__init__()
-        self.router = APIRouter(prefix="/users")
-        self._setup_routes()
+    def __init__(self, app: FastAPI, container: Container) -> None:
+        super().__init__(container=container)
+        router = APIRouter(prefix="/users",tags=["users"])
+        router.add_api_route(path="", endpoint=self.list, methods=["GET"])
+        router.add_api_route(path="", endpoint=self.create, methods=["POST"])
+        router.add_api_route(path="/{user_id}", endpoint=self.view, methods=["GET"])
+        app.include_router(router=router)
 
-    def _setup_routes(self) -> None:
-        self.router.get("")(self.list)
-        self.router.post("")(self.create)
-        self.router.get("/{user_id}")(self.view)
 
     async def list(self, req: UserListRequest = Depends()) -> JsonApiResponse:
         users = await self.container.user_service().all(
@@ -31,11 +31,11 @@ class UserController(BaseController):
             )
         )
 
-        return await self.api_response.response(data=users, include=req.include)
+        return await self.response(data=users, include=req.include)
 
     async def view(self, user_id: int, req: Request) -> JsonApiResponse:
         user = await self.container.user_service().get_by_id(user_id)
-        return await self.api_response.response(data=user, include=req.query_params.get("include", None))
+        return await self.response(data=user, include=req.query_params.get("include", None))
 
     async def create(
             self,
@@ -55,4 +55,4 @@ class UserController(BaseController):
         user.hash_password = self.container.hash_service().hash_password(req.password)
         user = await self.container.user_service().create(data=user)
 
-        return await self.api_response.response(data=user)
+        return await self.response(data=user)

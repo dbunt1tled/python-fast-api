@@ -1,24 +1,22 @@
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, FastAPI
 
 from src.app.user_notification.data.user_notification_status import UserNotificationStatus
 from src.app.user_notification.dto.user_notification import UserNotificationCreateRequest, UserNotificationListRequest
 from src.core.db.repository import Filter, FilterOperator, Pagination
+from src.core.di.container import Container
 from src.core.http.controller import BaseController
 from src.core.http.request.state import AuthState, get_auth_state
-from src.core.http.response.json_api import JsonAPIService
 from src.core.http.response.response import JsonApiResponse
 
 
 class UserNotificationController(BaseController):
 
-    def __init__(self) -> None:
-        super().__init__()
-        self.router = APIRouter(prefix="/user-notifications")
-        self._setup_routes()
-
-    def _setup_routes(self) -> None:
-        self.router.get("")(self.user_list)
-        self.router.post("")(self.create)
+    def __init__(self, app: FastAPI, container: Container) -> None:
+        super().__init__(container=container)
+        router = APIRouter(prefix="/user-notifications",tags=["user-notifications"])
+        router.add_api_route(path="", endpoint=self.user_list, methods=["GET"])
+        router.add_api_route(path="", endpoint=self.create, methods=["POST"])
+        app.include_router(router=router)
 
     async def user_list(
             self,
@@ -36,15 +34,15 @@ class UserNotificationController(BaseController):
             )
         )
 
-        return await self.api_response.response(data=notifications, include=req.include)
+        return await self.response(data=notifications, include=req.include)
 
     async def create(
-            self,
-            req: UserNotificationCreateRequest,
+        self,
+        req: UserNotificationCreateRequest,
     ) -> JsonApiResponse:
         notification = req.to_model()
         notification.user_id = 1
         notification.status = UserNotificationStatus.NEW
         user = await self.container.user_notification_service().create(data=notification)
 
-        return JsonAPIService.response(data=user)
+        return await self.response(data=user)

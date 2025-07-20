@@ -4,7 +4,7 @@ from src.app.user.data.role import Role
 from src.app.user.data.user_status import UserStatus
 from src.app.user.model.user import User
 from src.core.dto.dto import DTO, Paginated
-from src.core.http.response.response import BaseModelResponse, RelationshipConfig, RelationshipType
+from src.core.http.response.response import RelationshipConfig, RelationshipType, ResponseBaseModel
 
 
 class UserBase(DTO):
@@ -69,7 +69,7 @@ class UserListRequest(Paginated):
         examples=["p8t2H@example.com", "Ww5rP@example.com"],
     )
 
-class UserResponse(BaseModelResponse):
+class UserResponse(ResponseBaseModel):
     @property
     def model_name(self) -> str:
         return "User"
