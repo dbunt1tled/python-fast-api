@@ -55,7 +55,7 @@ class JsonAPIService:
     def error(
             status: int,
             title: str,
-            detail: str | None = None,
+            detail: str | list[str] | None = None,
             code: str | None = None,
             source: dict[str, Any] | None = None
     ) -> JsonApiResponse:

@@ -27,7 +27,7 @@ class JsonApiError(BaseModel):
     status: int
     code: str | None = None
     title: str
-    detail: str | None = None
+    detail: str | list[str] | None = None
     source: dict[str, Any] | None = None
 
 class RelationshipType(str, Enum):

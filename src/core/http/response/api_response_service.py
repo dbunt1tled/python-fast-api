@@ -1,16 +1,28 @@
+import traceback
 from collections.abc import Sequence
-from typing import Any
-
-from pydantic_core import ErrorDetails
+from typing import Any, ClassVar
 
 from src.app.user.dto.user import UserResponse
 from src.app.user_notification.dto.user_notification import UserNotificationResponse
 from src.core.db.repository import Paginator
 from src.core.di.container import Container
+from src.core.exception.error_no import ErrorNo
+from src.core.http.response.json_api import JsonAPIService
 from src.core.http.response.response import ResponseBaseModel, JsonApiError, JsonApiResource, JsonApiResponse
+from src.core.service.functions import to_invert_case
 
 
 class ApiResponseService:
+    ERROR_MESSAGES: ClassVar[dict[str, str]] = {
+        "int_parsing": "isn't an integer",
+        "float_parsing": "isn't float or integer",
+        "value_empty": "is empty",
+        "datetime_parsing": "invalid date format",
+        "missing": "is required",
+        "list_type": "isn't an array",
+    }
+
+
     def __init__(self, container: Container):
         self.container = container
         self._model_responses: dict[str, ResponseBaseModel] = {}
@@ -214,19 +226,28 @@ class ApiResponseService:
         return JsonApiResponse(errors=[error.model_dump()])
 
     @staticmethod
-    def format_pydantic_error(error: ErrorDetails) -> dict[str, Any]:
-        field_path = ""
-        if error.get('loc'):
-            loc = [str(item) for item in error['loc'] if item != 'body']
-            field_path = '.'.join(loc) if loc else ""
-        source = {}
-        if field_path:
-            source['pointer'] = f"/data/attributes/{field_path}"
+    def format_pydantic_error(errors: list[dict[str, Any]] | Sequence[Any]) -> JsonApiResponse:
+        formatted_errors: list[str] = []
 
-        return {
-            "status": "422",
-            "code": error.get('type', 'validation_error'),
-            "title": "Validation Error",
-            "detail": error.get('msg', 'Invalid input'),
-            "source": source if source else None
-        }
+        for error in errors:
+            message = str(error.get("msg", ""))
+            if error.get("type") in ApiResponseService.ERROR_MESSAGES:
+                loc: list[str] = error.get("loc", [])
+                field = ""
+                if len(loc) == 1:
+                    field = loc[0]
+                if len(loc) == 2:
+                    field = loc[1]
+                inp = error.get("input")
+                message = f"{f"{to_invert_case(field)}: " if field else ''}{ApiResponseService.ERROR_MESSAGES.get(str(error.get("type", "")))}{f". Given: {inp}" if inp else ''}"
+
+            formatted_errors.append(message)
+
+
+        return JsonAPIService.error(
+            status=422,
+            title="Validation Error",
+            detail=formatted_errors,
+            code=str(ErrorNo.GENERAL_VALIDATION_ERROR.value),
+            source={"traceback": traceback.format_exc()},
+        )
