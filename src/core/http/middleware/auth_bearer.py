@@ -10,7 +10,7 @@ from src.app.user.data.user_status import UserStatus
 from src.app.user.service.user_service import UserService
 from src.core.exception.error_no import ErrorNo
 from src.core.exception.exceptions import UnauthorizedException
-from src.core.service.hash import HashService
+from src.core.service.hash_service import HashService
 
 
 class AuthBearer(BaseHTTPMiddleware):

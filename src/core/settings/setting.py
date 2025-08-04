@@ -1,10 +1,14 @@
 from pydantic import Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
+from src.core.enum.env import Env
+
 
 class Settings(BaseSettings):
     model_config = SettingsConfigDict(validate_default=False, env_file=".env", env_file_encoding="utf-8", extra="ignore")
+    environment: Env = Field(default=Env.PRODUCTION, validation_alias="ENVIRONMENT")
     sqlalchemy_database_uri: str = Field(default="", validation_alias="SQLALCHEMY_DATABASE_URI")
+    x_api_key: str = Field(default="0077012a-8ae6-4fd8-b701-2a8ae64fd882", validation_alias="X_API_KEY")
     jwt_public_key: str = Field(default="", validation_alias="JWT_PUBLIC_KEY")
     jwt_private_key: str = Field(default="", validation_alias="JWT_PRIVATE_KEY")
     jwt_algorithm: str = Field(default="RS256", validation_alias="JWT_ALGORITHM")
@@ -16,5 +20,11 @@ class Settings(BaseSettings):
     app_password: str = Field(default="", validation_alias="APP_PASSWORD")
     from_email: str = Field(default="", validation_alias="FROM_EMAIL")
     app_url: str = Field(default="", validation_alias="APP_URL")
+
+    app_name: str = Field(default="App", validation_alias="APP_NAME")
+    service_name: str = Field(default="api", validation_alias="SERVICE_NAME")
+    loki_url: str = Field(default="", validation_alias="LOKI_URL")
+    loki_enabled: bool = Field(default=False, validation_alias="LOKI_ENABLED")
+    log_request: bool = Field(default=False, validation_alias="LOG_REQUEST")
 
 app_config = Settings()  # type: ignore

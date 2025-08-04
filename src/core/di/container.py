@@ -6,10 +6,11 @@ from src.app.user.service.user_service import UserService
 from src.app.user_notification.repository.user_notification_repository import UserNotificationRepository
 from src.app.user_notification.service.user_notification_service import UserNotificationService
 from src.core.db.asmysql import MyDatabaseConfig
+from src.core.log.log import Log
 from src.core.service.email.app_mail_service import AppMailService
 from src.core.service.email.email_service import EmailService
 from src.core.service.email.view_service import ViewService
-from src.core.service.hash import HashService
+from src.core.service.hash_service import HashService
 from src.core.settings.setting import Settings
 
 
@@ -19,6 +20,24 @@ class Container(containers.DeclarativeContainer):
     db_config = providers.Singleton(
         MyDatabaseConfig,
         dsn=app_config.provided.sqlalchemy_database_uri
+    )
+
+    log = providers.Singleton(
+        Log,
+        app_name=app_config().app_name,
+        env=app_config().environment,
+        service_name=app_config().service_name,
+        loki_url=app_config().loki_url,
+        loki_enabled=app_config().loki_enabled,
+    )
+
+    log_request = providers.Singleton(
+        Log,
+        app_name=app_config().app_name,
+        env=app_config().environment,
+        service_name="request",
+        loki_url="",
+        loki_enabled=False,
     )
 
     email_service = providers.Singleton(

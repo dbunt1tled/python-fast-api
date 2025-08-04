@@ -1,5 +1,4 @@
-import logging
-from fastapi import APIRouter, Depends, Header, FastAPI
+from fastapi import APIRouter, Depends, FastAPI, Header
 
 from src.app.auth.dto.bearer import Bearer
 from src.app.auth.dto.confirm_user import ConfirmUserRequest
