@@ -7,7 +7,7 @@ from src.core.exception.error_no import ErrorNo
 from src.core.exception.exceptions import UnauthorizedException, UnprocessableEntityException
 from src.core.service.dto.token import TokenBearer, TokenType
 from src.core.service.email.app_mail_service import AppMailService
-from src.core.service.hash import HashService
+from src.core.service.hash_service import HashService
 
 
 class AuthService:

@@ -1,7 +1,9 @@
 import base64
-from datetime import datetime, timedelta
 import secrets
 import string
+import uuid
+from datetime import datetime, timedelta
+
 import jwt
 from argon2 import PasswordHasher
 from argon2.exceptions import VerifyMismatchError
@@ -23,6 +25,18 @@ class HashService:
         if self.jwt_algorithm is None or self.jwt_algorithm == "":
             self.jwt_algorithm = "RS256"
         self.hasher = PasswordHasher()
+
+    def verify_x_api_key(self, key: str) -> bool:
+        return self.verify_hash(key, self.cfg.x_api_key)
+
+
+    @staticmethod
+    def verify_hash(hash1: str, hash2: str) -> bool:
+        return secrets.compare_digest(hash1, hash2)
+
+    @staticmethod
+    def uuid4() -> uuid.UUID:
+        return uuid.uuid4()
 
     def hash_password(self, password: str) -> str:
         return self.hasher.hash(password)

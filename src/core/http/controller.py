@@ -5,6 +5,7 @@ from typing import Any
 from src.core.di.container import Container
 from src.core.http.response.api_response_service import ApiResponseService
 from src.core.http.response.response import JsonApiResponse
+from src.core.log.log import Log
 from src.core.settings.setting import Settings
 
 
@@ -20,8 +21,8 @@ class BaseController(ABC):
     def get_api_config(self) -> Settings:
         return self.container.app_config()
 
-    def get_logger(self) -> logging.Logger:
-        return self.logger
+    def log(self) -> Log:
+        return self.container.log()
 
     async def response(
         self,
