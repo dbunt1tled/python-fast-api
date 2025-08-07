@@ -13,14 +13,14 @@ A modern, production-ready FastAPI boilerplate with built-in authentication, use
 - **Async MySQL** - Async database support with aiomysql
 - **Environment Configuration** - Easy environment variable management
 - **CORS** - Built-in CORS middleware
-- **Structured Logging** - Ready for production logging
+- **Structured Logging** - Ready for production logging with Loki support
 - **Type Hints** - Full Python type support
-- **Testing** - Pytest setup included
+- **Email Service** - Built-in email service for user notifications
 
 ## 📦 Prerequisites
 
-- Python 3.13+
-- MySQL 8.0+
+- Python 3.13
+- MySQL 8.0
 - [uv](https://github.com/astral-sh/uv) - Fast Python package installer and resolver
 
 ## 🛠️ Installation
@@ -77,47 +77,61 @@ src/
 ├── core/                  # Core functionality
 │   ├── di/               # Dependency injection
 │   ├── exception/         # Custom exceptions
-│   └── http/             # HTTP-related code
+│   ├── http/             # HTTP-related code
+│   ├── log/              # Logging configuration
+│   ├── service/          # Core services
+│   └── settings/         # Application settings
 └── database/              # Database configuration
 ```
 
 ## 📚 API Endpoints
 
 ### Authentication
-- `POST /auth/register` - Register a new user
+- `POST /auth/signup` - Register a new user
 - `POST /auth/login` - User login
 - `POST /auth/refresh` - Refresh access token
-- `POST /auth/confirm-email` - Confirm email address
-- `POST /auth/resend-confirm-email` - Resend confirmation email
+- `GET /auth/confirm-email` - Confirm email address
+- `POST /auth/re-send-confirm-email` - Resend confirmation email
 
 ### Users
-- `GET /users/me` - Get current user profile
-- `PATCH /users/me` - Update current user
-- `GET /users` - List users (admin only)
+- `GET /users` - List users
+- `POST /users` - Create a user
 - `GET /users/{user_id}` - Get user by ID
 
 ### Notifications
-- `GET /notifications` - List user notifications
-- `GET /notifications/{id}` - Get notification by ID
-- `PATCH /notifications/{id}/read` - Mark notification as read
+- `GET /user-notifications` - List user notifications
+- `POST /user-notifications` - Create a notification
 
 ## 🔒 Environment Variables
 
 Required environment variables are defined in `.env.example`. Copy this to `.env` and update the values:
 
 ```
+# Application
+ENVIRONMENT=dev
+LOG_REQUEST=True
+LOKI_URL="http://127.0.0.1:3100"
+LOKI_ENABLED=False
+APP_NAME="App"
+SERVICE_NAME="api"
+X_API_KEY=
+
 # Database
-DATABASE_URL=mysql+aiomysql://user:password@localhost:3306/dbname
+SQLALCHEMY_DATABASE_URI=mysqlaiomysql://user:password@host/db_name
 
 # JWT
-JWT_SECRET=your-secret-key
-JWT_ALGORITHM=ES256
-JWT_ACCESS_TOKEN_EXPIRE_MINUTES=30
-JWT_REFRESH_TOKEN_EXPIRE_DAYS=7
+JWT_PUBLIC_KEY=""  # base64
+JWT_PRIVATE_KEY=""  # base64
+JWT_ALGORITHM="ES512"
+JWT_ACCESS_EXPIRATION_HOURS=8
+JWT_REFRESH_EXPIRATION_HOURS=24
+JWT_CONFIRM_TOKEN_EXP_HOURS=24
 
-# App
-DEBUG=True
-ENVIRONMENT=development
+# Email
+SMTP_SERVER="smtp.gmail.com"
+SMTP_PORT=587
+APP_PASSWORD="YOUR_PASSWORD"
+FROM_EMAIL="YOUR_EMAIL"
 ```
 
 ## 🧪 Testing
