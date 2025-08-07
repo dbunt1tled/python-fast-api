@@ -1,7 +1,8 @@
 from abc import ABC, abstractmethod
+from collections.abc import Sequence
 from dataclasses import dataclass
 from enum import Enum
-from typing import Any, Sequence
+from typing import Any
 
 from dependency_injector.containers import Container
 from pydantic import BaseModel
@@ -198,7 +199,7 @@ class ResponseBaseModel(ABC):
 
         local_value = getattr(data, config.local_key)
         foreign_key_value = to_camel(config.foreign_key)
-        if hasattr(resource, 'attributes') and foreign_key_value in resource.attributes:
+        if hasattr(resource, "attributes") and foreign_key_value in resource.attributes:
             return str(resource.attributes[foreign_key_value]) == str(local_value)
 
         return False

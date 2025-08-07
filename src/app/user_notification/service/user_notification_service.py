@@ -4,7 +4,7 @@ from typing import Any
 from src.app.user_notification.data.user_notification_status import UserNotificationStatus
 from src.app.user_notification.model.user_notification import UserNotification
 from src.app.user_notification.repository.user_notification_repository import UserNotificationRepository
-from src.core.db.repository import Filter, OrderBy, Pager, Pagination, Paginator, FilterOperator
+from src.core.db.repository import Filter, FilterOperator, OrderBy, Pager, Pagination, Paginator
 
 
 class UserNotificationService:
@@ -42,7 +42,7 @@ class UserNotificationService:
     async def new_by_user_id(self, id_value: int|list[int]) -> Sequence[UserNotification]:
         return await self.all(  # type: ignore
             filters=[
-                Filter('user_id', FilterOperator.IN if isinstance(id_value, list) else FilterOperator.EQ, id_value),
-                Filter('status', FilterOperator.EQ, UserNotificationStatus.NEW),
+                Filter("user_id", FilterOperator.IN if isinstance(id_value, list) else FilterOperator.EQ, id_value),
+                Filter("status", FilterOperator.EQ, UserNotificationStatus.NEW),
             ],
         )

@@ -5,7 +5,7 @@ from typing import Any, TypeVar
 
 from fastapi import Request
 
-T = TypeVar('T')
+T = TypeVar("T")
 
 invert_case_regex = re.compile(r"(?<!^)(?=[A-Z])")
 def chunked(iterable: list[T], size: int) -> Generator[list[T]]:
@@ -13,8 +13,8 @@ def chunked(iterable: list[T], size: int) -> Generator[list[T]]:
         yield iterable[i:i + size]
 
 def to_invert_case(s: str) -> str:
-    s = re.sub(invert_case_regex, '_', s).lower()
-    return ' '.join(word.capitalize() for word in s.split('_'))
+    s = re.sub(invert_case_regex, "_", s).lower()
+    return " ".join(word.capitalize() for word in s.split("_"))
 
 def filter_headers(request: Request) -> dict[str, str]:
     return filter_params(params=request.headers.items())
@@ -27,12 +27,12 @@ def filter_params(params: dict[str, Any] | list[tuple[str, Any]] | list[dict[str
 
 def extract_body(request: Request, secure: bool = False, as_dict: bool = False) -> dict[str, Any] | str:
     result: dict[str, Any] | str = {} if as_dict else ""
-    if not hasattr(request.state, 'body'):
+    if not hasattr(request.state, "body"):
         return result
     body = request.state.body
     if not body:
         return result
-    body_request = body.decode('utf-8', errors='ignore')
+    body_request = body.decode("utf-8", errors="ignore")
     try:
         result = json.loads(body_request)
         if secure:

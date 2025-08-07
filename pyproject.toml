@@ -138,7 +138,6 @@ quote-style = "double"
 indent-style = "space"
 line-ending = "auto"
 docstring-code-line-length = "dynamic"
-skip-source-first-line = false
 
 [tool.ruff.isort]
 known-first-party = ["app"]
