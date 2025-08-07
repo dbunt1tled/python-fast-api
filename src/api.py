@@ -26,6 +26,7 @@ from src.core.service.functions import extract_body, filter_headers
 @asynccontextmanager
 async def lifespan(api: FastAPI) -> AsyncGenerator[None]:
     container = Container()
+    await container.rmq_producer().initialize()
     AuthController(app=api, container=container)
     UserController(app=api, container=container)
     UserNotificationController(app=api, container=container)

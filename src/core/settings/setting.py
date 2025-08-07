@@ -27,4 +27,12 @@ class Settings(BaseSettings):
     loki_enabled: bool = Field(default=False, validation_alias="LOKI_ENABLED")
     log_request: bool = Field(default=False, validation_alias="LOG_REQUEST")
 
+    rabbitmq_host: str = Field(default="localhost", validation_alias="RABBITMQ_HOST")
+    rabbitmq_port: int = Field(default=5672, validation_alias="RABBITMQ_PORT")
+    rabbitmq_username: str = Field(default="guest", validation_alias="RABBITMQ_USERNAME")
+    rabbitmq_password: str = Field(default="guest", validation_alias="RABBITMQ_PASSWORD")
+    rabbitmq_virtual_host: str = Field(default="/", validation_alias="RABBITMQ_VIRTUAL_HOST")
+
+
+
 app_config = Settings()  # type: ignore

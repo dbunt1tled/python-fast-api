@@ -7,6 +7,8 @@ from src.app.user_notification.repository.user_notification_repository import Us
 from src.app.user_notification.service.user_notification_service import UserNotificationService
 from src.core.db.asmysql import MyDatabaseConfig
 from src.core.log.log import Log
+from src.core.rabbit_mq.config import RabbitMQConfig
+from src.core.rabbit_mq.producer import AsyncRabbitMQProducer
 from src.core.service.email.app_mail_service import AppMailService
 from src.core.service.email.email_service import EmailService
 from src.core.service.email.view_service import ViewService
@@ -36,8 +38,17 @@ class Container(containers.DeclarativeContainer):
         app_name=app_config().app_name,
         env=app_config().environment,
         service_name="request",
-        loki_url="",
-        loki_enabled=False,
+        loki_url=app_config().loki_url,
+        loki_enabled=app_config().loki_enabled,
+    )
+
+    log_rm = providers.Singleton(
+        Log,
+        app_name=app_config().app_name,
+        env=app_config().environment,
+        service_name="rabbitmq",
+        loki_url=app_config().loki_url,
+        loki_enabled=app_config().loki_enabled,
     )
 
     email_service = providers.Singleton(
@@ -46,6 +57,21 @@ class Container(containers.DeclarativeContainer):
         smtp_port=app_config.provided.smtp_port,
         app_password=app_config.provided.app_password,
         from_email=app_config.provided.from_email,
+    )
+
+    rmq_config = providers.Singleton(
+        RabbitMQConfig,
+        host=app_config.provided.rabbitmq_host,
+        port=app_config.provided.rabbitmq_port,
+        username=app_config.provided.rabbitmq_username,
+        password=app_config.provided.rabbitmq_password,
+        virtual_host=app_config.provided.rabbitmq_virtual_host
+    )
+
+    rmq_producer = providers.Singleton(
+        AsyncRabbitMQProducer,
+        config=rmq_config,
+        log=log_rm
     )
 
     view_service = providers.Singleton(

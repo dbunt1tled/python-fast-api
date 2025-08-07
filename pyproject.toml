@@ -5,6 +5,7 @@ description = "Add your description here"
 readme = "README.md"
 requires-python = ">=3.13"
 dependencies = [
+    "aio-pika>=9.5.7",
     "aiomysql>=0.2.0",
     "alembic>=1.16.2",
     "argon2-cffi>=25.1.0",
