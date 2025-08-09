@@ -35,6 +35,7 @@ dev = [
     "annotated-types>=0.7.0",
     "isort>=6.0.1",
     "mypy>=1.16.1",
+    "pydeps>=3.0.1",
     "ruff>=0.12.1",
     "sqlalchemy2-stubs>=0.0.2a38",
     "types-pyjwt>=1.7.1",

@@ -1,7 +1,6 @@
 from abc import ABC, abstractmethod
 
 from src.core.di.container import Container
-from src.core.log.log import Log
 from src.core.rabbit_mq.data import MessageContext, ProcessingResult
 
 
@@ -9,10 +8,9 @@ class MessageHandler(ABC):
     def __init__(
             self,
             container: Container,
-            logger: Log
     ) -> None:
         self.container = container
-        self.logger = logger
+        self.logger = container.log()
 
     @abstractmethod
     async def handle(self, context: MessageContext) -> ProcessingResult:

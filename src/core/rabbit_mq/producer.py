@@ -6,7 +6,7 @@ from datetime import datetime
 from typing import Any
 
 import aio_pika
-from aio_pika import DeliveryMode, Message
+from aio_pika import DeliveryMode, ExchangeType, Message
 from aio_pika.abc import AbstractChannel, AbstractConnection, AbstractQueue
 
 from src.core.log.log import Log
@@ -66,28 +66,11 @@ class AsyncRabbitMQProducer:
         finally:
             await channel.close()
 
-    @staticmethod
-    async def declare_queue(
-            channel: AbstractChannel,
-            queue_name: str,
-            durable: bool = True,
-            exclusive: bool = False,
-            auto_delete: bool = False,
-            arguments: dict[str, Any] | None = None
-    ) -> AbstractQueue:
-        return await channel.declare_queue(
-            queue_name,
-            durable=durable,
-            exclusive=exclusive,
-            auto_delete=auto_delete,
-            arguments=arguments or {}
-        )
-
     async def send_message(
             self,
             queue_name: str,
             message: dict[str, Any] | str | bytes,
-            exchange_name: str = "",
+            exchange_name: str,
             routing_key: str | None = None,
             priority: int = 0,
             expiration: int | None = None,
@@ -97,7 +80,22 @@ class AsyncRabbitMQProducer:
     ) -> bool:
         try:
             async with self.get_channel() as channel:
-                await self.declare_queue(channel, queue_name, durable=durable)
+                exchange = await channel.declare_exchange(
+                    name=exchange_name,
+                    type=ExchangeType.DIRECT,
+                    durable=durable,
+                    auto_delete=False,
+                    internal=False,
+                )
+
+                queue = await channel.declare_queue(
+                    name=queue_name,
+                    durable=True,
+                    exclusive=False,
+                    auto_delete=False,
+                )
+
+                await queue.bind(exchange, routing_key= routing_key or queue_name)
 
                 if isinstance(message, dict):
                     body = json.dumps(message, ensure_ascii=False).encode("utf-8")
@@ -106,7 +104,6 @@ class AsyncRabbitMQProducer:
                 else:
                     body = message
 
-                # Создание сообщения
                 msg = Message(
                     body,
                     delivery_mode=DeliveryMode.PERSISTENT if durable else DeliveryMode.NOT_PERSISTENT,
@@ -117,7 +114,6 @@ class AsyncRabbitMQProducer:
                     timestamp=datetime.now()
                 )
 
-                exchange = await channel.get_exchange(exchange_name or "")
                 await exchange.publish(msg, routing_key=routing_key or queue_name)
 
                 self.logger.info(f"✉️ Message sent to queue '{queue_name}'")

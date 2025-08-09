@@ -1,14 +1,16 @@
+import asyncio
 import json
 import time
 import traceback
 
 import aio_pika
+from aio_pika import ExchangeType
 from aio_pika.abc import AbstractChannel, AbstractConnection, AbstractIncomingMessage
 
 from src.core.log.log import Log
 from src.core.rabbit_mq.config import RabbitMQConfig
 from src.core.rabbit_mq.data import MessageContext, ProcessingResult
-from src.core.rabbit_mq.hadler import MessageHandler
+from src.core.rabbit_mq.message_handler import MessageHandler
 from src.core.service.statistics import render_statistics
 
 
@@ -22,7 +24,7 @@ class AsyncRabbitMQConsumer:
         self._is_initialized = False
         self._running = False
 
-    async def initialize(self) -> None:
+    async def initialize(self, loop: asyncio.AbstractEventLoop,) -> None:
         if self._is_initialized:
             return
 
@@ -31,6 +33,7 @@ class AsyncRabbitMQConsumer:
                 url=self.config.url,
                 heartbeat=self.config.heartbeat,
                 connection_timeout=self.config.connection_timeout,
+                loop=loop
             )
             self._is_initialized = True
             self.logger.info("🚀 RabbitMQ consumer initialized successfully")
@@ -68,7 +71,7 @@ class AsyncRabbitMQConsumer:
             raise RuntimeError("🛑 Connection to RabbitMQ is not established")
 
         channel = await self._conn.channel() # type: ignore
-        await channel.set_qos(prefetch_count=10)
+        await channel.set_qos(prefetch_count=1)
         self._channel[queue_name] = channel
         return channel
 
@@ -105,8 +108,6 @@ class AsyncRabbitMQConsumer:
                 await message.reject(requeue=False)
                 return
 
-            await handler.handle(context)
-            await message.ack()
             self.logger.info(f"🧩🐇 Consumer start process message: {context.to_str()}")
             result = await handler.handle(context)
             if result == ProcessingResult.SUCCESS:
@@ -125,28 +126,44 @@ class AsyncRabbitMQConsumer:
     async def consume(
             self,
             queue_name: str,
+            exchange_name: str,
             durable: bool = True,
             exclusive: bool = False,
             auto_delete: bool = False
     ) -> None:
-        if not self._is_initialized:
+        if not self._is_initialized or not self._conn:
             raise RuntimeError("🛑 RabbitMQ consumer is not initialized")
         try:
-            channel = await self._create_channel(queue_name=queue_name)
-            queue = await channel.declare_queue(
-                queue_name,
-                durable=durable,
-                exclusive=exclusive,
-                auto_delete=auto_delete,
-            )
+            async with self._conn:
+                channel = await self._conn.channel() # type: ignore
+                await channel.set_qos(prefetch_count=1)
 
-            await queue.consume(
-               lambda message: self._process_message(message, queue_name),
-               no_ack=False
-            )
 
-            self._running = True
-            self.logger.info(f"🚀 RabbitMQ consumer started consuming messages from queue: {queue_name}")
+                exchange = await channel.declare_exchange(
+                    name=exchange_name,
+                    type=ExchangeType.DIRECT,
+                    durable=durable,
+                    auto_delete=auto_delete,
+                    internal=False,
+                )
+
+                queue = await channel.declare_queue(
+                    queue_name,
+                    durable=durable,
+                    exclusive=exclusive,
+                    auto_delete=auto_delete,
+                )
+
+                await queue.bind(exchange, queue_name)
+
+                await queue.consume(
+                   lambda message: self._process_message(message, queue_name),
+                   no_ack=False
+                )
+
+                self._running = True
+                self.logger.info(f"🚀 RabbitMQ consumer started consuming messages from queue: {queue_name}")
+                await asyncio.Future()
         except Exception as e:
             self.logger.error(f"🛑 Failed to consume messages from queue {queue_name}: {e}", error=traceback.extract_tb(e.__traceback__)[-1])
             raise

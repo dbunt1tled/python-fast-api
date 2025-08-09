@@ -1,13 +1,15 @@
 import traceback
 
+from src.cmd.email_worker import EmailAction
 from src.core.rabbit_mq.data import MessageContext, ProcessingResult
-from src.core.rabbit_mq.hadler import MessageHandler
+from src.core.rabbit_mq.message_handler import MessageHandler
 from src.core.service.email.email import EMessage
 
 
 class SendEmailHandler(MessageHandler):
-    def can_handle(self, action: str) -> bool:
-        return action in ["send_email"]
+    @staticmethod
+    def can_handle(action: str) -> bool:
+        return action in [EmailAction.send_email.value]
 
     async def handle(self, context: MessageContext) -> ProcessingResult:
         try:
@@ -27,7 +29,7 @@ class SendEmailHandler(MessageHandler):
                 body=str(body),
                 attachments=[str(attachment) for attachment in attachments] if isinstance(attachments, list) else ([str(attachments)] if attachments else [])
             ))
+            return ProcessingResult.SUCCESS
         except Exception as e:
             self.logger.error(f"🛑 Failed to send email: {e}", error=traceback.extract_tb(e.__traceback__)[-1])
             return ProcessingResult.REJECT
-        return ProcessingResult.SUCCESS

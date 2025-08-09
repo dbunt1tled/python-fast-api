@@ -5,6 +5,7 @@ from src.app.auth.dto.confirm_user import ConfirmUserRequest
 from src.app.auth.dto.login import LoginRequest
 from src.app.auth.dto.re_send_confirm_email import ReSendConfirmEmailRequest
 from src.app.auth.dto.sign_up import SignupRequest
+from src.cmd.email_worker import EmailAction
 from src.core.db.repository import Filter, FilterOperator
 from src.core.di.container import Container
 from src.core.dto.dto import Message
@@ -27,9 +28,15 @@ class AuthController(BaseController):
 
     async def login(self, req: LoginRequest) -> JsonApiResponse:
         await self.rmq_producer().send_message(
-            queue_name="import_data_consumer",
-            message={"email": req.email,},
-            exchange_name="import_data",
+            queue_name="p_email",
+            message={
+                "action": EmailAction.send_email.value,
+                "to": req.email,
+                "subject": "Email confirmation",
+                "body": "Confirm your email",
+                "attachments": []
+            },
+            exchange_name="p_email_exchange",
         )
         token = await self.container.auth_service().login(
             email=req.email,
