@@ -14,11 +14,11 @@ from src.core.service.email.email import EMessage
 
 class EmailService:
     def __init__(
-            self,
-            smtp_server: str,
-            smtp_port: int,
-            app_password: str,
-            from_email: str,
+        self,
+        smtp_server: str,
+        smtp_port: int,
+        app_password: str,
+        from_email: str,
     ) -> None:
         self.smtp_server = smtp_server
         self.smtp_port = smtp_port
@@ -42,7 +42,9 @@ class EmailService:
             for file_path in message.attachments:
                 file = Path(file_path)
                 if not file.exists():
-                    raise NotFoundException(error_no=ErrorNo.EMAIL_ATTACHMENT_NOT_FOUND,message=f"File not found: {file_path}")
+                    raise NotFoundException(
+                        error_no=ErrorNo.EMAIL_ATTACHMENT_NOT_FOUND, message=f"File not found: {file_path}"
+                    )
                 msg.attach(EmailService._attach_file(file))
 
         self._send_message(msg, message.to)
@@ -51,36 +53,36 @@ class EmailService:
     def _attach_file(file_path: Path) -> MIMEBase:
         filename = file_path.name
         ext = file_path.suffix.lower()
-        if ext in ['.jpg', '.jpeg', '.png', '.gif', '.bmp']:
+        if ext in [".jpg", ".jpeg", ".png", ".gif", ".bmp"]:
             with open(file_path, "rb") as f:
                 attachment = MIMEImage(f.read())
-                attachment.add_header('Content-Disposition', f'attachment; filename= {filename}')
+                attachment.add_header("Content-Disposition", f"attachment; filename= {filename}")
 
-        elif ext == '.pdf':
+        elif ext == ".pdf":
             with open(file_path, "rb") as f:
                 attachment = MIMEApplication(f.read(), _subtype="pdf")
-                attachment.add_header('Content-Disposition', f'attachment; filename= {filename}')
+                attachment.add_header("Content-Disposition", f"attachment; filename= {filename}")
 
-        elif ext in ['.doc', '.docx']:
+        elif ext in [".doc", ".docx"]:
             with open(file_path, "rb") as f:
                 attachment = MIMEApplication(f.read(), _subtype="msword")
-                attachment.add_header('Content-Disposition', f'attachment; filename= {filename}')
+                attachment.add_header("Content-Disposition", f"attachment; filename= {filename}")
 
-        elif ext in ['.xls', '.xlsx']:
+        elif ext in [".xls", ".xlsx"]:
             with open(file_path, "rb") as f:
                 attachment = MIMEApplication(f.read(), _subtype="vnd.ms-excel")
-                attachment.add_header('Content-Disposition', f'attachment; filename= {filename}')
+                attachment.add_header("Content-Disposition", f"attachment; filename= {filename}")
 
         else:
             with open(file_path, "rb") as f:
-                attachment = MIMEBase('application', 'octet-stream')
+                attachment = MIMEBase("application", "octet-stream")
                 attachment.set_payload(f.read())
                 encoders.encode_base64(attachment)
-                attachment.add_header('Content-Disposition', f'attachment; filename= {filename}')
+                attachment.add_header("Content-Disposition", f"attachment; filename= {filename}")
 
         return attachment
 
-    def _send_message(self, msg: MIMEMultipart, to_email: str|list[str]) -> None:
+    def _send_message(self, msg: MIMEMultipart, to_email: str | list[str]) -> None:
         recipients = [to_email] if isinstance(to_email, str) else to_email
 
         with smtplib.SMTP_SSL(self.smtp_server, self.smtp_port) as server:

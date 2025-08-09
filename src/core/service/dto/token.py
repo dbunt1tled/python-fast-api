@@ -8,6 +8,7 @@ class TokenType(str, Enum):
     REFRESH = "refresh"
     CONFIRMATION = "confirmation"
 
+
 class Token:
     token: str
     token_type: TokenType
@@ -33,7 +34,7 @@ class Token:
         self.expires_in = expires_in
 
     @staticmethod
-    def from_payload(token : str, payload: dict) -> "Token":
+    def from_payload(token: str, payload: dict) -> "Token":
         return Token(
             token=token,
             token_type=payload["type"],
@@ -42,6 +43,7 @@ class Token:
             email=payload.get("email", None),
             expires_in=datetime.fromtimestamp(timestamp=int(payload["exp"]), tz=timezone.utc),
         )
+
 
 @dataclass
 class TokenBearer:

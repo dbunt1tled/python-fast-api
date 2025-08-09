@@ -25,7 +25,10 @@ class AsyncRabbitMQConsumer:
         self._running = False
         self._shutdown_event = asyncio.Event()
 
-    async def initialize(self, loop: asyncio.AbstractEventLoop,) -> None:
+    async def initialize(
+        self,
+        loop: asyncio.AbstractEventLoop,
+    ) -> None:
         if self._is_initialized:
             return
 
@@ -34,7 +37,7 @@ class AsyncRabbitMQConsumer:
                 url=self.config.url,
                 heartbeat=self.config.heartbeat,
                 connection_timeout=self.config.connection_timeout,
-                loop=loop
+                loop=loop,
             )
             self._is_initialized = True
             self.logger.info("🚀 RabbitMQ consumer initialized successfully")
@@ -72,7 +75,7 @@ class AsyncRabbitMQConsumer:
         if not self._conn:
             raise RuntimeError("🛑 Connection to RabbitMQ is not established")
 
-        channel = await self._conn.channel() # type: ignore
+        channel = await self._conn.channel()  # type: ignore
         await channel.set_qos(prefetch_count=1)
         self._channel[queue_name] = channel
         return channel
@@ -101,7 +104,7 @@ class AsyncRabbitMQConsumer:
 
     async def _process_message(self, message: AbstractIncomingMessage, queue_name: str) -> None:
         start_time = time.time()
-        context: MessageContext|None = None
+        context: MessageContext | None = None
         try:
             context = await self._parse_message(message=message, queue_name=queue_name)
             handler = self.get_handler(context.action)
@@ -114,32 +117,40 @@ class AsyncRabbitMQConsumer:
             result = await handler.handle(context)
             if result == ProcessingResult.SUCCESS:
                 await message.ack()
-                self.logger.info(f"🧩🐇 Consumer processed message successfully: {context.to_str()}, {render_statistics(start_time=start_time)}")
+                self.logger.info(
+                    f"🧩🐇 Consumer processed message successfully: {context.to_str()}, {render_statistics(start_time=start_time)}"
+                )
             elif result == ProcessingResult.RETRY:
-                self.logger.info(f"♻️🐇 Consumer message requeued for retry: {context.to_str()}, {render_statistics(start_time=start_time)}")
+                self.logger.info(
+                    f"♻️🐇 Consumer message requeued for retry: {context.to_str()}, {render_statistics(start_time=start_time)}"
+                )
                 await message.reject(requeue=True)
             else:
-                self.logger.info(f"🚫🐇 Consumer message rejected: {context.to_str()}, {render_statistics(start_time=start_time)}")
+                self.logger.info(
+                    f"🚫🐇 Consumer message rejected: {context.to_str()}, {render_statistics(start_time=start_time)}"
+                )
                 await message.reject(requeue=False)
         except Exception as e:
-            self.logger.error(f"🛑🐇 Failed to process message: {e},  {context.to_str() if context is not None else ''} {render_statistics(start_time=start_time)}", error=traceback.extract_tb(e.__traceback__)[-1])
+            self.logger.error(
+                f"🛑🐇 Failed to process message: {e},  {context.to_str() if context is not None else ''} {render_statistics(start_time=start_time)}",
+                error=traceback.extract_tb(e.__traceback__)[-1],
+            )
             await message.reject(requeue=False)
 
     async def consume(
-            self,
-            queue_name: str,
-            exchange_name: str,
-            durable: bool = True,
-            exclusive: bool = False,
-            auto_delete: bool = False
+        self,
+        queue_name: str,
+        exchange_name: str,
+        durable: bool = True,
+        exclusive: bool = False,
+        auto_delete: bool = False,
     ) -> None:
         if not self._is_initialized or not self._conn:
             raise RuntimeError("🛑 RabbitMQ consumer is not initialized")
         try:
             async with self._conn:
-                channel = await self._conn.channel() # type: ignore
+                channel = await self._conn.channel()  # type: ignore
                 await channel.set_qos(prefetch_count=1)
-
 
                 exchange = await channel.declare_exchange(
                     name=exchange_name,
@@ -158,17 +169,14 @@ class AsyncRabbitMQConsumer:
 
                 await queue.bind(exchange, queue_name)
 
-                await queue.consume(
-                   lambda message: self._process_message(message, queue_name),
-                   no_ack=False
-                )
+                await queue.consume(lambda message: self._process_message(message, queue_name), no_ack=False)
 
                 self._running = True
                 self.logger.info(f"🚀 RabbitMQ consumer started consuming messages from queue: {queue_name}")
                 await self._shutdown_event.wait()
         except Exception as e:
-            self.logger.error(f"🛑 Failed to consume messages from queue {queue_name}: {e}", error=traceback.extract_tb(e.__traceback__)[-1])
+            self.logger.error(
+                f"🛑 Failed to consume messages from queue {queue_name}: {e}",
+                error=traceback.extract_tb(e.__traceback__)[-1],
+            )
             raise
-
-
-

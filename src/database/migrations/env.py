@@ -31,22 +31,26 @@ if config.config_file_name is not None:
 # target_metadata = mymodel.Base.metadata
 target_metadata = Entity.metadata
 
+
 # other values from the config, defined by the needs of env.py,
 # can be acquired:
 # my_important_option = config.get_main_option("my_important_option")
 # ... etc.
-def url()-> str:
+def url() -> str:
     db_url: str = str(app_config.sqlalchemy_database_uri)
-    return db_url if db_url else config.get_main_option("sqlalchemy.url", '')
+    return db_url if db_url else config.get_main_option("sqlalchemy.url", "")
+
 
 def import_entities(package) -> None:  # type: ignore
-    for m in pkgutil.walk_packages( package.__path__, package.__name__ + "."):
+    for m in pkgutil.walk_packages(package.__path__, package.__name__ + "."):
         try:
             importlib.import_module(m.name)
         except Exception as e:
             print(f"Failed to import {m.name}: {e}")
 
+
 import_entities(src.app)
+
 
 def run_migrations_offline() -> None:
     context.configure(
@@ -61,6 +65,7 @@ def run_migrations_offline() -> None:
     with context.begin_transaction():
         context.run_migrations()
 
+
 def do_run_migrations(connection: Connection) -> None:
     context.configure(
         connection=connection,
@@ -71,6 +76,7 @@ def do_run_migrations(connection: Connection) -> None:
 
     with context.begin_transaction():
         context.run_migrations()
+
 
 async def run_async_migrations() -> None:
     configuration = config.get_section(config.config_ini_section)
@@ -89,8 +95,10 @@ async def run_async_migrations() -> None:
 
     await connectable.dispose()
 
+
 def run_migrations_online() -> None:
     asyncio.run(run_async_migrations())
+
 
 if context.is_offline_mode():
     run_migrations_offline()

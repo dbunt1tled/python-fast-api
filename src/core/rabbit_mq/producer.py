@@ -18,7 +18,6 @@ class AsyncRabbitMQProducer:
         self,
         config: RabbitMQConfig,
         log: Log,
-
     ) -> None:
         self.config = config
         self.logger = log
@@ -49,34 +48,30 @@ class AsyncRabbitMQProducer:
 
     @property
     def is_connected(self) -> bool:
-        return bool(
-                self._is_initialized
-                and self._conn
-                and not self._conn.is_closed
-        )
+        return bool(self._is_initialized and self._conn and not self._conn.is_closed)
 
     @asynccontextmanager
     async def get_channel(self) -> AsyncGenerator[AbstractChannel]:
         if not self.is_connected:
             raise RuntimeError("🛑 Producer not initialized or connection lost")
 
-        channel = await self._conn.channel() # type: ignore
+        channel = await self._conn.channel()  # type: ignore
         try:
             yield channel
         finally:
             await channel.close()
 
     async def send_message(
-            self,
-            queue_name: str,
-            message: dict[str, Any] | str | bytes,
-            exchange_name: str,
-            routing_key: str | None = None,
-            priority: int = 0,
-            expiration: int | None = None,
-            headers: dict[str, Any] | None = None,
-            durable: bool = True,
-            content_type: str = "application/json"
+        self,
+        queue_name: str,
+        message: dict[str, Any] | str | bytes,
+        exchange_name: str,
+        routing_key: str | None = None,
+        priority: int = 0,
+        expiration: int | None = None,
+        headers: dict[str, Any] | None = None,
+        durable: bool = True,
+        content_type: str = "application/json",
     ) -> bool:
         try:
             async with self.get_channel() as channel:
@@ -95,7 +90,7 @@ class AsyncRabbitMQProducer:
                     auto_delete=False,
                 )
 
-                await queue.bind(exchange, routing_key= routing_key or queue_name)
+                await queue.bind(exchange, routing_key=routing_key or queue_name)
 
                 if isinstance(message, dict):
                     body = json.dumps(message, ensure_ascii=False).encode("utf-8")
@@ -111,7 +106,7 @@ class AsyncRabbitMQProducer:
                     content_type=content_type,
                     headers=headers or {},
                     expiration=expiration,
-                    timestamp=datetime.now()
+                    timestamp=datetime.now(),
                 )
 
                 await exchange.publish(msg, routing_key=routing_key or queue_name)
@@ -124,17 +119,11 @@ class AsyncRabbitMQProducer:
             return False
 
     async def send_batch_messages(
-            self,
-            queue_name: str,
-            messages: list[dict[str, Any] | str],
-            **kwargs: Any
+        self, queue_name: str, messages: list[dict[str, Any] | str], **kwargs: Any
     ) -> dict[str, int]:
         results = {"success": 0, "failed": 0}
 
-        tasks = [
-            self.send_message(queue_name, message, **kwargs)
-            for message in messages
-        ]
+        tasks = [self.send_message(queue_name, message, **kwargs) for message in messages]
 
         results_list = await asyncio.gather(*tasks, return_exceptions=True)
 

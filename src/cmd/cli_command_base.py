@@ -16,6 +16,7 @@ class AsyncCLICommandBase(ABC):
 
     def initialize_container(self) -> None:
         from src.core.di.container import Container
+
         self._container = Container()
         self._log = self._container.log()
 
@@ -58,7 +59,7 @@ class AsyncCLICommandBase(ABC):
 
         shutdown_event = asyncio.Event()
         main_task = None
-        
+
         def signal_handler(signum: int, frame: Any) -> None:
             print(f"\n🛑 Received signal {signum}. Initiating graceful shutdown...")
             if main_task and not main_task.done():
@@ -67,7 +68,7 @@ class AsyncCLICommandBase(ABC):
 
         signal.signal(signal.SIGINT, signal_handler)
         signal.signal(signal.SIGTERM, signal_handler)
-        
+
         try:
             main_task = loop.create_task(command.run(loop))
             exit_code = loop.run_until_complete(main_task)
@@ -85,5 +86,5 @@ class AsyncCLICommandBase(ABC):
 
             if pending:
                 loop.run_until_complete(asyncio.gather(*pending, return_exceptions=True))
-            
+
             loop.close()

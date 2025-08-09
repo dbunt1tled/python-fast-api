@@ -13,7 +13,8 @@ from src.core.db.entity import Entity
 from src.core.exception.error_no import ErrorNo
 from src.core.exception.exceptions import DomainException
 
-T = TypeVar('T', bound=Entity)
+T = TypeVar("T", bound=Entity)
+
 
 class FilterOperator(Enum):
     EQ = "eq"
@@ -33,34 +34,39 @@ class FilterOperator(Enum):
     STARTSWITH = "startswith"
     ENDSWITH = "endswith"
     # JSON operators
-    JSON_EXTRACT = "json_extract"          # Extract value by path: field->'$.path'
-    JSON_EXTRACT_TEXT = "json_extract_text" # Extract text value: field->>'$.path'
-    JSON_CONTAINS = "json_contains"        # Check if JSON contains value
+    JSON_EXTRACT = "json_extract"  # Extract value by path: field->'$.path'
+    JSON_EXTRACT_TEXT = "json_extract_text"  # Extract text value: field->>'$.path'
+    JSON_CONTAINS = "json_contains"  # Check if JSON contains value
     JSON_CONTAINS_PATH = "json_contains_path"  # Check if path exists
     JSON_ARRAY_CONTAINS = "json_array_contains"  # Check if array contains value
-    JSON_LENGTH = "json_length"            # Get length of JSON array/object
+    JSON_LENGTH = "json_length"  # Get length of JSON array/object
+
 
 @dataclass
 class Filter:
     field: str
     operator: FilterOperator
     value: Any = None
-    json_path: str|None = None  # For JSON operations like '$.roles[*].name'
+    json_path: str | None = None  # For JSON operations like '$.roles[*].name'
 
     def __post_init__(self) -> None:
         # Validate filter based on operator
         if self.operator in [FilterOperator.IS_NULL, FilterOperator.IS_NOT_NULL]:
             self.value = None
         elif self.operator == FilterOperator.BETWEEN and (
-                not isinstance(self.value, (list, tuple)) or len(self.value) != 2
+            not isinstance(self.value, (list, tuple)) or len(self.value) != 2
         ):
             raise ValueError("BETWEEN operator requires exactly two values")
-        elif self.operator in [
-            FilterOperator.JSON_EXTRACT,
-            FilterOperator.JSON_EXTRACT_TEXT,
-            FilterOperator.JSON_CONTAINS_PATH,
-            FilterOperator.JSON_LENGTH
-        ] and not self.json_path:
+        elif (
+            self.operator
+            in [
+                FilterOperator.JSON_EXTRACT,
+                FilterOperator.JSON_EXTRACT_TEXT,
+                FilterOperator.JSON_CONTAINS_PATH,
+                FilterOperator.JSON_LENGTH,
+            ]
+            and not self.json_path
+        ):
             raise ValueError(f"{self.operator.value} requires json_path parameter")
 
 
@@ -81,6 +87,7 @@ class Pager:
             return None
         return (self.offset // self.limit) + 1
 
+
 @dataclass
 class Pagination:
     page: int = 1
@@ -93,6 +100,7 @@ class Pagination:
 
         return (self.page - 1) * self.per_page
 
+
 class Paginator(Generic[T]):
     def __init__(self, items: Sequence[T], total: int, page: int, per_page: int):
         self.items = items
@@ -104,38 +112,33 @@ class Paginator(Generic[T]):
     def pages(self) -> int:
         return (self.total + self.per_page - 1) // self.per_page
 
+
 class BaseRepository(ABC, Generic[T]):
-    def __init__(
-            self,
-            db_config: MyDatabaseConfig,
-            model: type[T],
-            id_field: str = "id"
-    ):
+    def __init__(self, db_config: MyDatabaseConfig, model: type[T], id_field: str = "id"):
         self._db_config = db_config
         self._model = model
         self._id_field = id_field
 
     async def get_by_id(
-            self,
-            id_value: Any,
+        self,
+        id_value: Any,
     ) -> T:
         obj = await self.find_by_id(id_value)
         if obj is None:
             raise DomainException(
                 error_no=ErrorNo.REPOSITORY_DATA_BY_ID_NOT_FOUND,
-                message=f"{self._model.__name__} with {self._id_field}={id_value} not found"
+                message=f"{self._model.__name__} with {self._id_field}={id_value} not found",
             )
         return obj
 
     async def find_by_id(
-            self,
-            id_value: Any,
+        self,
+        id_value: Any,
     ) -> T | None:
         query = select(self._model).where(getattr(self._model, self._id_field) == id_value)
         async with self.get_session() as session:
             result = await session.execute(query)
             return result.scalar_one_or_none()
-
 
     async def create(self, data: dict[str, Any] | T) -> T:
         if isinstance(data, dict):
@@ -149,9 +152,9 @@ class BaseRepository(ABC, Generic[T]):
             return entity
 
     async def update(
-            self,
-            id_value: Any,
-            data: dict[str, Any] | T,
+        self,
+        id_value: Any,
+        data: dict[str, Any] | T,
     ) -> T:
         if isinstance(data, dict):
             d = data
@@ -169,11 +172,7 @@ class BaseRepository(ABC, Generic[T]):
             await session.refresh(entity)
             return entity
 
-    async def update_many(
-            self,
-            filters: list[Filter],
-            update_data: dict[str, Any]
-    ) -> int:
+    async def update_many(self, filters: list[Filter], update_data: dict[str, Any]) -> int:
         query = update(self._model)
         query = self._apply_filters(query, filters)
         query = query.values(**update_data)
@@ -200,11 +199,11 @@ class BaseRepository(ABC, Generic[T]):
             return result.rowcount or 0
 
     async def find_all(
-            self,
-            filters: list[Filter] | None = None,
-            order_by: list[OrderBy] | None = None,
-            pagination: Pagination | None = None,
-            pager: Pager | None = None,
+        self,
+        filters: list[Filter] | None = None,
+        order_by: list[OrderBy] | None = None,
+        pagination: Pagination | None = None,
+        pager: Pager | None = None,
     ) -> Sequence[T] | Paginator[T]:
         query = select(self._model)
 
@@ -242,9 +241,9 @@ class BaseRepository(ABC, Generic[T]):
             return result.scalars().all()
 
     async def find_one(
-            self,
-            filters: list[Filter] | None = None,
-            order_by: list[OrderBy] | None = None,
+        self,
+        filters: list[Filter] | None = None,
+        order_by: list[OrderBy] | None = None,
     ) -> T | None:
         query = select(self._model)
 
@@ -280,7 +279,7 @@ class BaseRepository(ABC, Generic[T]):
             result = await session.execute(query)
             return result.first() is not None
 
-    def _apply_filters(self, query: Select| Update | Delete, filters: list[Filter]) -> Select| Update | Delete:
+    def _apply_filters(self, query: Select | Update | Delete, filters: list[Filter]) -> Select | Update | Delete:
         conditions = []
 
         for filter_item in filters:
@@ -290,7 +289,6 @@ class BaseRepository(ABC, Generic[T]):
                 conditions.append(field.is_(None))
             elif filter_item.operator == FilterOperator.IS_NOT_NULL:
                 conditions.append(field.is_not(None))
-
 
             if filter_item.value is not None:
                 if filter_item.operator == FilterOperator.EQ:
@@ -316,7 +314,6 @@ class BaseRepository(ABC, Generic[T]):
                 elif filter_item.operator == FilterOperator.BETWEEN:
                     conditions.append(field.between(filter_item.value[0], filter_item.value[1]))
 
-
             if filter_item.operator == FilterOperator.CONTAINS:
                 conditions.append(field.contains(filter_item.value))
             elif filter_item.operator == FilterOperator.STARTSWITH:
@@ -326,33 +323,39 @@ class BaseRepository(ABC, Generic[T]):
             # JSON operators
             elif filter_item.operator == FilterOperator.JSON_EXTRACT:
                 # Extract value: field->'$.path' = value
-                conditions.append(field.op('->')( filter_item.json_path) == filter_item.value)
+                conditions.append(field.op("->")(filter_item.json_path) == filter_item.value)
             elif filter_item.operator == FilterOperator.JSON_EXTRACT_TEXT:
                 # Extract text value: field->>'$.path' = value
-                conditions.append(field.op('->>')( filter_item.json_path) == filter_item.value)
+                conditions.append(field.op("->>")(filter_item.json_path) == filter_item.value)
             elif filter_item.operator == FilterOperator.JSON_CONTAINS:
                 # Check if JSON contains value: JSON_CONTAINS(field, value)
                 from sqlalchemy import func
+
                 conditions.append(func.json_contains(field, filter_item.value))
             elif filter_item.operator == FilterOperator.JSON_CONTAINS_PATH:
                 # Check if path exists: JSON_CONTAINS_PATH(field, path)
                 from sqlalchemy import func
+
                 conditions.append(func.json_contains_path(field, filter_item.json_path))
             elif filter_item.operator == FilterOperator.JSON_ARRAY_CONTAINS:
                 # Check if JSON array contains value
                 from sqlalchemy import func
+
                 if filter_item.json_path:
                     # Check specific path in array
-                    conditions.append(func.json_contains(
-                        field.op('->')( filter_item.json_path),
-                        f'"{filter_item.value}"' if isinstance(filter_item.value, str) else filter_item.value
-                    ))
+                    conditions.append(
+                        func.json_contains(
+                            field.op("->")(filter_item.json_path),
+                            f'"{filter_item.value}"' if isinstance(filter_item.value, str) else filter_item.value,
+                        )
+                    )
                 else:
                     # Check entire field
                     conditions.append(func.json_contains(field, filter_item.value))
             elif filter_item.operator == FilterOperator.JSON_LENGTH:
                 # Get length of JSON array/object: JSON_LENGTH(field, path) = value
                 from sqlalchemy import func
+
                 if filter_item.json_path:
                     conditions.append(func.json_length(field, filter_item.json_path) == filter_item.value)
                 else:
@@ -380,6 +383,7 @@ class BaseRepository(ABC, Generic[T]):
 
     async def raw_query(self, query: str, params: dict[str, Any] | None = None) -> Any:
         from sqlalchemy import text
+
         async with self.get_session() as session:
             result = await session.execute(text(query), params or {})
             return result

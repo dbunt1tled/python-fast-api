@@ -5,7 +5,9 @@ from src.core.enum.env import Env
 
 
 class Settings(BaseSettings):
-    model_config = SettingsConfigDict(validate_default=False, env_file=".env", env_file_encoding="utf-8", extra="ignore")
+    model_config = SettingsConfigDict(
+        validate_default=False, env_file=".env", env_file_encoding="utf-8", extra="ignore"
+    )
     environment: Env = Field(default=Env.PRODUCTION, validation_alias="ENVIRONMENT")
     sqlalchemy_database_uri: str = Field(default="", validation_alias="SQLALCHEMY_DATABASE_URI")
     x_api_key: str = Field(default="0077012a-8ae6-4fd8-b701-2a8ae64fd882", validation_alias="X_API_KEY")

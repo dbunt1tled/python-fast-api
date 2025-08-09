@@ -10,7 +10,10 @@ from src.core.db.entity import Entity
 class User(Entity):
     __tablename__ = "users"
 
-    id: Mapped[int] = mapped_column(Integer, primary_key=True,)
+    id: Mapped[int] = mapped_column(
+        Integer,
+        primary_key=True,
+    )
     first_name: Mapped[str] = mapped_column(String(70), nullable=False)
     second_name: Mapped[str] = mapped_column(String(70), nullable=False)
     email: Mapped[str] = mapped_column(String(100), unique=True, nullable=False)
@@ -23,7 +26,4 @@ class User(Entity):
         server_default=func.now(),
         onupdate=func.now(),
     )
-    created_at: Mapped[DateTime] = mapped_column(
-        DateTime(timezone=True),
-        server_default=func.now()
-    )
+    created_at: Mapped[DateTime] = mapped_column(DateTime(timezone=True), server_default=func.now())

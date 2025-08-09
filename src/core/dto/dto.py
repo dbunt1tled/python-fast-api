@@ -2,7 +2,7 @@ from pydantic import AliasGenerator, BaseModel, ConfigDict
 from pydantic.alias_generators import to_camel
 
 
-class DTO (BaseModel):
+class DTO(BaseModel):
     model_config = ConfigDict(
         extra="ignore",
         alias_generator=AliasGenerator(
@@ -10,12 +10,14 @@ class DTO (BaseModel):
             validation_alias=to_camel,
             serialization_alias=to_camel,
         ),
-        populate_by_name=True
+        populate_by_name=True,
     )
     include: str | None = None
 
+
 class Message(DTO):
     message: str
+
 
 class Paginated(DTO):
     page: int | None = None

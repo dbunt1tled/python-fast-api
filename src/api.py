@@ -34,12 +34,11 @@ async def lifespan(api: FastAPI) -> AsyncGenerator[None]:
     await container.db_config().close()
     container.unwire()
 
+
 app = FastAPI(
     lifespan=lifespan,
     title="Simple API",
-    description=(
-        "API for startup project.\n\n"
-    ),
+    description="API for startup project.\n\n",
     version="1.0.0",
 )
 di = Container()
@@ -67,6 +66,7 @@ app.add_middleware(XApiKeyAuth, hash_service=di.hash_service())
 if di.app_config().log_request:
     app.add_middleware(LoggingRequest, logger=di.log_request())
 app.add_middleware(BodySave, hash_service=di.hash_service())
+
 
 async def exception_handler(request: Request, e: Exception) -> JSONResponse:
     di = Container()
@@ -110,6 +110,7 @@ async def exception_handler(request: Request, e: Exception) -> JSONResponse:
         status_code=error.errors[0]["status"],
         content=error.model_dump(exclude_none=True),
     )
+
 
 if RequestValidationError in app.exception_handlers:
     del app.exception_handlers[RequestValidationError]

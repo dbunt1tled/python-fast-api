@@ -1,5 +1,6 @@
 from sqlalchemy import Integer, TypeDecorator
 
+
 class IntEnum(TypeDecorator):
     impl = Integer
     cache_ok = True

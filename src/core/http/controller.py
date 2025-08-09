@@ -33,6 +33,8 @@ class BaseController(ABC):
         data: Any | None = None,
         meta: dict[str, Any] | None = None,
         resource_type: str | None = None,
-        include: str | None = None
+        include: str | None = None,
     ) -> JsonApiResponse:
-        return await self.api_response_service.response(data=data, meta=meta, resource_type=resource_type, include=include)
+        return await self.api_response_service.response(
+            data=data, meta=meta, resource_type=resource_type, include=include
+        )

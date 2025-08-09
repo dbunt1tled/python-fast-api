@@ -11,8 +11,8 @@ if TYPE_CHECKING:
 
 class MessageHandler(ABC):
     def __init__(
-            self,
-            container: Container,
+        self,
+        container: Container,
     ) -> None:
         self.container = container
         self.logger = container.log()

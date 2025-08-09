@@ -10,18 +10,15 @@ from src.core.http.response.response import JsonApiResponse
 
 
 class UserNotificationController(BaseController):
-
     def __init__(self, app: FastAPI, container: Container) -> None:
         super().__init__(container=container)
-        router = APIRouter(prefix="/user-notifications",tags=["user-notifications"])
+        router = APIRouter(prefix="/user-notifications", tags=["user-notifications"])
         router.add_api_route(path="", endpoint=self.user_list, methods=["GET"])
         router.add_api_route(path="", endpoint=self.create, methods=["POST"])
         app.include_router(router=router)
 
     async def user_list(
-            self,
-            state: AuthState = Depends(get_auth_state),
-            req: UserNotificationListRequest = Depends()
+        self, state: AuthState = Depends(get_auth_state), req: UserNotificationListRequest = Depends()
     ) -> JsonApiResponse:
         notifications = await self.container.user_notification_service().all(
             filters=[
@@ -30,8 +27,8 @@ class UserNotificationController(BaseController):
             ],
             pagination=Pagination(
                 per_page=req.per_page or 10,
-                page= req.page or 1,
-            )
+                page=req.page or 1,
+            ),
         )
 
         return await self.response(data=notifications, include=req.include)

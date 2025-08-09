@@ -23,17 +23,19 @@ class UserService:
         return await self.user_repository.update(id_value=id_value, data=data)
 
     async def one(
-            self,
-            filters: list[Filter] | None = None,
-            order_by: list[OrderBy] | None = None,
+        self,
+        filters: list[Filter] | None = None,
+        order_by: list[OrderBy] | None = None,
     ) -> User | None:
         return await self.user_repository.find_one(filters=filters, order_by=order_by)
 
     async def all(
-            self,
-            filters: list[Filter] | None = None,
-            order_by: list[OrderBy] | None = None,
-            pagination: Pagination | None = None,
-            pager: Pager | None = None,
+        self,
+        filters: list[Filter] | None = None,
+        order_by: list[OrderBy] | None = None,
+        pagination: Pagination | None = None,
+        pager: Pager | None = None,
     ) -> Sequence[User] | Paginator[User]:
-        return await self.user_repository.find_all(filters=filters, order_by=order_by, pagination=pagination, pager=pager)
+        return await self.user_repository.find_all(
+            filters=filters, order_by=order_by, pagination=pagination, pager=pager
+        )

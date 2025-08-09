@@ -22,7 +22,6 @@ class ApiResponseService:
         "list_type": "isn't an array",
     }
 
-
     def __init__(self, container: Container):
         self.container = container
         self._model_responses: dict[str, ResponseBaseModel] = {}
@@ -41,12 +40,12 @@ class ApiResponseService:
         return self._model_responses.get(model_name)
 
     async def response(
-            self,
-            data: Any | None = None,
-            errors: list[JsonApiError | dict[str, Any]] | None = None,
-            meta: dict[str, Any] | None = None,
-            resource_type: str | None = None,
-            include: str | None = None
+        self,
+        data: Any | None = None,
+        errors: list[JsonApiError | dict[str, Any]] | None = None,
+        meta: dict[str, Any] | None = None,
+        resource_type: str | None = None,
+        include: str | None = None,
     ) -> JsonApiResponse:
         if data is None and errors is None:
             return JsonApiResponse(meta=meta)
@@ -75,14 +74,14 @@ class ApiResponseService:
             return self._response_without_model_handler(data, resource_type, meta)
 
     async def _response_with_model_handler(
-            self,
-            data: Any,
-            model_response: ResponseBaseModel,
-            meta: dict[str, Any] | None = None,
-            include_params: dict[str, bool] | None = None
+        self,
+        data: Any,
+        model_response: ResponseBaseModel,
+        meta: dict[str, Any] | None = None,
+        include_params: dict[str, bool] | None = None,
     ) -> JsonApiResponse:
         resources: list[JsonApiResource] | list[dict[str, Any]] | JsonApiResource = []  # noqa
-        included_resources: list[JsonApiResource] | list[dict[str, Any]] = [] # noqa
+        included_resources: list[JsonApiResource] | list[dict[str, Any]] = []  # noqa
 
         if isinstance(data, Paginator):
             resources = await self._map_items_with_model_response(data.items, model_response, include_params)
@@ -92,7 +91,7 @@ class ApiResponseService:
                 "page": data.page,
                 "perPage": data.per_page,
                 "totalPages": data.pages,
-                **(meta or {})
+                **(meta or {}),
             }
         elif isinstance(data, list):
             resources = await self._map_items_with_model_response(data, model_response, include_params)
@@ -101,21 +100,16 @@ class ApiResponseService:
             resources = await self._data_to_resource_with_model_response(data, model_response, include_params)
             included_resources = await self._process_includes_for_item(data, model_response, include_params)
 
-        response_data = {
-            "data": resources,
-            "meta": meta
-        }
+        response_data = {"data": resources, "meta": meta}
 
         if included_resources:
             response_data["included"] = included_resources
 
-        return JsonApiResponse(
-            data=resources,
-            included=included_resources if included_resources else None,
-            meta=meta
-        )
+        return JsonApiResponse(data=resources, included=included_resources if included_resources else None, meta=meta)
 
-    def _response_without_model_handler(self, data: Any, resource_type: str, meta: dict[str, Any] | None = None) -> JsonApiResponse:
+    def _response_without_model_handler(
+        self, data: Any, resource_type: str, meta: dict[str, Any] | None = None
+    ) -> JsonApiResponse:
         resources: list[JsonApiResource] | list[dict[str, Any]] | JsonApiResource = []  # noqa
 
         if isinstance(data, Paginator):
@@ -125,7 +119,7 @@ class ApiResponseService:
                 "page": data.page,
                 "perPage": data.per_page,
                 "totalPages": data.pages,
-                **(meta or {})
+                **(meta or {}),
             }
         elif isinstance(data, list):
             resources = self.map_items(data)
@@ -136,9 +130,9 @@ class ApiResponseService:
 
     @staticmethod
     async def _map_items_with_model_response(
-            data: list[Any] | Sequence[Any],
-            model_response: ResponseBaseModel,
-            include_params: dict[str, bool] | None = None
+        data: list[Any] | Sequence[Any],
+        model_response: ResponseBaseModel,
+        include_params: dict[str, bool] | None = None,
     ) -> list[JsonApiResource]:
         if not data:
             return []
@@ -155,9 +149,7 @@ class ApiResponseService:
 
     @staticmethod
     async def _data_to_resource_with_model_response(
-            data: Any,
-            model_response: ResponseBaseModel,
-            include_params: dict[str, bool] | None = None
+        data: Any, model_response: ResponseBaseModel, include_params: dict[str, bool] | None = None
     ) -> JsonApiResource:
         included = await model_response.process_includes(data, include_params or {})
         resource = model_response.data_to_resource(data, model_response.get_resource_type())
@@ -166,9 +158,9 @@ class ApiResponseService:
 
     @staticmethod
     async def _process_includes_for_list(
-            data: list[Any] | Sequence[Any],
-            model_response: ResponseBaseModel,
-            include_params: dict[str, bool] | None = None
+        data: list[Any] | Sequence[Any],
+        model_response: ResponseBaseModel,
+        include_params: dict[str, bool] | None = None,
     ) -> list[JsonApiResource]:
         if not include_params:
             return []
@@ -183,9 +175,7 @@ class ApiResponseService:
 
     @staticmethod
     async def _process_includes_for_item(
-            data: Any,
-            model_response: ResponseBaseModel,
-            include_params: dict[str, bool] | None = None
+        data: Any, model_response: ResponseBaseModel, include_params: dict[str, bool] | None = None
     ) -> list[JsonApiResource]:
         if not include_params:
             return []
@@ -210,11 +200,11 @@ class ApiResponseService:
 
     @staticmethod
     def error(
-            status: int,
-            title: str,
-            detail: str | None = None,
-            code: str | None = None,
-            source: dict[str, Any] | None = None
+        status: int,
+        title: str,
+        detail: str | None = None,
+        code: str | None = None,
+        source: dict[str, Any] | None = None,
     ) -> JsonApiResponse:
         error = JsonApiError(
             status=status,
@@ -239,10 +229,9 @@ class ApiResponseService:
                 if len(loc) == 2:
                     field = loc[1]
                 inp = error.get("input")
-                message = f"{f"{to_invert_case(field)}: " if field else ''}{ApiResponseService.ERROR_MESSAGES.get(str(error.get("type", "")))}{f". Given: {inp}" if inp else ''}"
+                message = f"{f'{to_invert_case(field)}: ' if field else ''}{ApiResponseService.ERROR_MESSAGES.get(str(error.get('type', '')))}{f'. Given: {inp}' if inp else ''}"
 
             formatted_errors.append(message)
-
 
         return JsonAPIService.error(
             status=422,

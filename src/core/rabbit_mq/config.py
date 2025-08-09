@@ -10,6 +10,7 @@ class RabbitMQConfig:
     heartbeat: int = 600
     connection_timeout: int = 30
 
+
 @dataclass
 class ExchangeConfig:
     name: str

@@ -11,10 +11,10 @@ class JsonAPIService:
 
     @staticmethod
     def response(
-            data: Any = None,
-            errors: list[JsonApiError | dict[str, Any]] | None = None,
-            meta: dict[str, Any] | None = None,
-            resource_type: str | None = None,
+        data: Any = None,
+        errors: list[JsonApiError | dict[str, Any]] | None = None,
+        meta: dict[str, Any] | None = None,
+        resource_type: str | None = None,
     ) -> JsonApiResponse:
         resources: list[JsonApiResource] | list[dict[str, Any]] | JsonApiResource = []  # noqa
         if data is None and errors is None:
@@ -42,7 +42,7 @@ class JsonAPIService:
         return JsonApiResponse(data=resources, meta=meta)
 
     @staticmethod
-    def map_items(data : list|  Sequence[Any]) -> list[JsonApiResource]:
+    def map_items(data: list | Sequence[Any]) -> list[JsonApiResource]:
         resources = []
         resource_type = ""
         if len(data) > 0:
@@ -53,11 +53,11 @@ class JsonAPIService:
 
     @staticmethod
     def error(
-            status: int,
-            title: str,
-            detail: str | list[str] | None = None,
-            code: str | None = None,
-            source: dict[str, Any] | None = None
+        status: int,
+        title: str,
+        detail: str | list[str] | None = None,
+        code: str | None = None,
+        source: dict[str, Any] | None = None,
     ) -> JsonApiResponse:
         error = JsonApiError(
             status=status,

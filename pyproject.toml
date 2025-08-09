@@ -129,7 +129,7 @@ ignore = [
 "tests/*" = ["S101", "PLR2004", "ANN"]
 "__init__.py" = ["F401"]
 
-[tool.ruff.flake8-quotes]
+[tool.ruff.lint.flake8-quotes]
 inline-quotes = "double"
 multiline-quotes = "double"
 docstring-quotes = "double"
@@ -141,7 +141,7 @@ indent-style = "space"
 line-ending = "auto"
 docstring-code-line-length = "dynamic"
 
-[tool.ruff.isort]
+[tool.ruff.lint.isort]
 known-first-party = ["app"]
 
 [tool.black]

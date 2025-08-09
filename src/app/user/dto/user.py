@@ -48,9 +48,7 @@ class UserBase(DTO):
     )
 
 
-
 class UserCreateRequest(UserBase):
-
     def to_user(self) -> User:
         return User(
             first_name=self.first_name,
@@ -60,6 +58,7 @@ class UserCreateRequest(UserBase):
             roles=self.roles or [Role.USER],
         )
 
+
 class UserListRequest(Paginated):
     email: str | None = Field(
         None,
@@ -68,6 +67,7 @@ class UserListRequest(Paginated):
         description="The email of the user",
         examples=["p8t2H@example.com", "Ww5rP@example.com"],
     )
+
 
 class UserResponse(ResponseBaseModel):
     @property
@@ -82,7 +82,7 @@ class UserResponse(ResponseBaseModel):
                 service_name="user_notification_service",
                 service_method="new_by_user_id",
                 foreign_key="user_id",
-                relationship_type=RelationshipType.HAS_MANY
+                relationship_type=RelationshipType.HAS_MANY,
             )
         }
 

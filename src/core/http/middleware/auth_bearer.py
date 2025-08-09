@@ -23,15 +23,10 @@ class AuthBearer(BaseHTTPMiddleware):
         "/auth/signup",
         "/auth/re-send-confirm-email",
         "/auth/confirm-email",
-        "/health"
+        "/health",
     ]
 
-    def __init__(
-            self,
-            app: ASGIApp,
-            user_service: UserService,
-            hash_service: HashService
-    ) -> None:
+    def __init__(self, app: ASGIApp, user_service: UserService, hash_service: HashService) -> None:
         super().__init__(app=app)
         self.hash_service = hash_service
         self.user_service = user_service
@@ -57,7 +52,9 @@ class AuthBearer(BaseHTTPMiddleware):
 
         payload = self.hash_service.verify_token(token)
         if not payload:
-            raise UnauthorizedException(error_no=ErrorNo.AUTHORIZATION_BEARER_TOKEN_INVALID_OR_EXPIRED, message="Unauthorized!")
+            raise UnauthorizedException(
+                error_no=ErrorNo.AUTHORIZATION_BEARER_TOKEN_INVALID_OR_EXPIRED, message="Unauthorized!"
+            )
 
         user = await self.user_service.get_by_id(int(payload.subject))
         if not user:

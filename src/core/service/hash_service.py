@@ -14,10 +14,7 @@ from src.core.settings.setting import Settings
 
 
 class HashService:
-    def __init__(
-            self,
-            cfg: Settings
-    ) -> None:
+    def __init__(self, cfg: Settings) -> None:
         self.cfg = cfg
         self.jwt_public_key = base64.b64decode(cfg.jwt_public_key).decode("utf-8")
         self.jwt_private_key = base64.b64decode(cfg.jwt_private_key).decode("utf-8")
@@ -28,7 +25,6 @@ class HashService:
 
     def verify_x_api_key(self, key: str) -> bool:
         return self.verify_hash(key, self.cfg.x_api_key)
-
 
     @staticmethod
     def verify_hash(hash1: str, hash2: str) -> bool:
@@ -62,7 +58,7 @@ class HashService:
         return Token(
             subject=str(user.id),
             token=str(token),
-            token_type= TokenType.ACCESS,
+            token_type=TokenType.ACCESS,
             expires_in=exp,
         )
 
@@ -80,7 +76,7 @@ class HashService:
         return Token(
             subject=str(user.id),
             token=str(token),
-            token_type= TokenType.REFRESH,
+            token_type=TokenType.REFRESH,
             expires_in=exp,
         )
 
@@ -99,7 +95,7 @@ class HashService:
         return Token(
             subject=str(user.id),
             token=str(token),
-            token_type= TokenType.CONFIRMATION,
+            token_type=TokenType.CONFIRMATION,
             expires_in=exp,
         )
 
@@ -116,10 +112,7 @@ class HashService:
                 token,
                 self.jwt_public_key,
                 algorithms=[self.jwt_algorithm],
-                options={
-                    "verify_signature": True,
-                    "verify_expiration": check_expiration
-                }
+                options={"verify_signature": True, "verify_expiration": check_expiration},
             )
             return Token.from_payload(token=token, payload=payload)
         except jwt.ExpiredSignatureError as e:
@@ -132,10 +125,10 @@ class HashService:
     @staticmethod
     def random_string(
         length: int = 16,
-        include_uppercase: bool= True,
-        include_lowercase: bool= True,
-        include_digits: bool= True,
-        include_punctuation: bool= False,
+        include_uppercase: bool = True,
+        include_lowercase: bool = True,
+        include_digits: bool = True,
+        include_punctuation: bool = False,
         custom_chars: str | None = None,
     ) -> str:
         if length < 1:
@@ -157,4 +150,4 @@ class HashService:
             if not chars:
                 raise ValueError("No characters selected for random string generation")
 
-        return ''.join(secrets.choice(chars) for _ in range(length))
+        return "".join(secrets.choice(chars) for _ in range(length))

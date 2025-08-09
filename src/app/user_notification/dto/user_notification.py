@@ -17,11 +17,9 @@ class UserNotificationBase(DTO):
 
 
 class UserNotificationCreateRequest(UserNotificationBase):
-
     def to_model(self) -> UserNotification:
-        return UserNotification(
-            data={"message": self.message}
-        )
+        return UserNotification(data={"message": self.message})
+
 
 class UserNotificationListRequest(Paginated):
     status: UserNotificationStatus | None = Field(
@@ -29,6 +27,7 @@ class UserNotificationListRequest(Paginated):
         description="The email of the user",
         examples=["p8t2H@example.com", "Ww5rP@example.com"],
     )
+
 
 class UserNotificationResponse(ResponseBaseModel):
     @property
@@ -39,9 +38,6 @@ class UserNotificationResponse(ResponseBaseModel):
     def relationships(self) -> dict[str, RelationshipConfig]:
         return {
             "User": RelationshipConfig(
-                name="User",
-                service_name="user_service",
-                foreign_key="id",
-                relationship_type=RelationshipType.HAS_ONE
+                name="User", service_name="user_service", foreign_key="id", relationship_type=RelationshipType.HAS_ONE
             ),
         }

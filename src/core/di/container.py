@@ -20,10 +20,7 @@ from src.core.settings.setting import Settings
 class Container(containers.DeclarativeContainer):
     config = providers.Configuration()
     app_config = providers.Singleton(Settings)
-    db_config = providers.Singleton(
-        MyDatabaseConfig,
-        dsn=app_config.provided.sqlalchemy_database_uri
-    )
+    db_config = providers.Singleton(MyDatabaseConfig, dsn=app_config.provided.sqlalchemy_database_uri)
 
     log = providers.Singleton(
         Log,
@@ -65,17 +62,9 @@ class Container(containers.DeclarativeContainer):
         url=app_config.provided.rabbitmq_url,
     )
 
-    rmq_producer = providers.Singleton(
-        AsyncRabbitMQProducer,
-        config=rmq_config,
-        log=log_rm
-    )
+    rmq_producer = providers.Singleton(AsyncRabbitMQProducer, config=rmq_config, log=log_rm)
 
-    rmq_consumer = providers.Singleton(
-        AsyncRabbitMQConsumer,
-        config=rmq_config,
-        log=log_rm
-    )
+    rmq_consumer = providers.Singleton(AsyncRabbitMQConsumer, config=rmq_config, log=log_rm)
 
     view_service = providers.Singleton(
         ViewService,
@@ -83,10 +72,7 @@ class Container(containers.DeclarativeContainer):
         app_url=app_config.provided.app_url,
     )
 
-    hash_service = providers.Singleton(
-        HashService,
-        cfg=app_config
-    )
+    hash_service = providers.Singleton(HashService, cfg=app_config)
 
     app_email_service = providers.Singleton(
         AppMailService,
@@ -117,4 +103,3 @@ class Container(containers.DeclarativeContainer):
         hash_service=hash_service,
         app_email_service=app_email_service,
     )
-
