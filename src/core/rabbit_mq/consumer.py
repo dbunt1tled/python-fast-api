@@ -23,6 +23,7 @@ class AsyncRabbitMQConsumer:
         self._handlers: dict[str, MessageHandler] = {}
         self._is_initialized = False
         self._running = False
+        self._shutdown_event = asyncio.Event()
 
     async def initialize(self, loop: asyncio.AbstractEventLoop,) -> None:
         if self._is_initialized:
@@ -43,6 +44,7 @@ class AsyncRabbitMQConsumer:
 
     async def close(self) -> None:
         self._running = False
+        self._shutdown_event.set()
 
         for channel in self._channel.values():
             if not channel.is_closed:
@@ -163,7 +165,7 @@ class AsyncRabbitMQConsumer:
 
                 self._running = True
                 self.logger.info(f"🚀 RabbitMQ consumer started consuming messages from queue: {queue_name}")
-                await asyncio.Future()
+                await self._shutdown_event.wait()
         except Exception as e:
             self.logger.error(f"🛑 Failed to consume messages from queue {queue_name}: {e}", error=traceback.extract_tb(e.__traceback__)[-1])
             raise

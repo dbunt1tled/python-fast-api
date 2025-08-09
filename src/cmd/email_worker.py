@@ -1,6 +1,15 @@
 import asyncio
+import sys
+from pathlib import Path
 
-from src.cmd.cli_command_base import AsyncCLICommandBase
+
+def setup_path() -> None:
+    script_dir = Path(__file__).parent.absolute()
+    project_root = script_dir.parent.parent
+    sys.path.insert(0, str(project_root))
+setup_path()
+
+from src.cmd.cli_command_base import AsyncCLICommandBase  # noqa: E402
 
 
 class EmailWorker(AsyncCLICommandBase):
@@ -24,6 +33,9 @@ class EmailWorker(AsyncCLICommandBase):
             try:
                 self.log.info("🚀 Starting email worker...")
                 await worker.start()
+            except asyncio.CancelledError:
+                self.log.info("🚦 Email worker cancelled, shutting down gracefully...")
+                return 0
             except Exception as e:
                 self.log.error(f"🛑 Failed to start RabbitMQ worker: {e}")
                 return 1

@@ -1,8 +1,8 @@
 import asyncio
+import signal
 import sys
 from abc import ABC, abstractmethod
-from pathlib import Path
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 if TYPE_CHECKING:
     from src.core.di.container import Container
@@ -13,12 +13,6 @@ class AsyncCLICommandBase(ABC):
     def __init__(self) -> None:
         self._container: Container | None = None
         self._log: Log | None = None
-
-    @staticmethod
-    def setup_path() -> None:
-        script_dir = Path(__file__).parent.absolute()
-        project_root = script_dir.parent.parent
-        sys.path.insert(0, str(project_root))
 
     def initialize_container(self) -> None:
         from src.core.di.container import Container
@@ -43,7 +37,6 @@ class AsyncCLICommandBase(ABC):
 
     async def run(self, loop: asyncio.AbstractEventLoop) -> int:
         try:
-            self.setup_path()
             self.initialize_container()
             return await self.execute(loop)
         except ImportError as e:
@@ -62,8 +55,35 @@ class AsyncCLICommandBase(ABC):
         command = cls()
         loop = asyncio.new_event_loop()
         asyncio.set_event_loop(loop)
+
+        shutdown_event = asyncio.Event()
+        main_task = None
+        
+        def signal_handler(signum: int, frame: Any) -> None:
+            print(f"\n🛑 Received signal {signum}. Initiating graceful shutdown...")
+            if main_task and not main_task.done():
+                main_task.cancel()
+            shutdown_event.set()
+
+        signal.signal(signal.SIGINT, signal_handler)
+        signal.signal(signal.SIGTERM, signal_handler)
+        
         try:
-            exit_code = loop.run_until_complete(command.run(loop))
+            main_task = loop.create_task(command.run(loop))
+            exit_code = loop.run_until_complete(main_task)
             sys.exit(exit_code)
+        except asyncio.CancelledError:
+            print("🚦 Command was cancelled gracefully")
+            sys.exit(0)
+        except KeyboardInterrupt:
+            print("🚦 Keyboard interrupt received, shutting down...")
+            sys.exit(0)
         finally:
+            pending = asyncio.all_tasks(loop)
+            for task in pending:
+                task.cancel()
+
+            if pending:
+                loop.run_until_complete(asyncio.gather(*pending, return_exceptions=True))
+            
             loop.close()
