@@ -11,17 +11,18 @@ from src.core.db.entity import Entity
 class UserNotification(Entity):
     __tablename__ = "user_notifications"
 
-    id: Mapped[int] = mapped_column(Integer, primary_key=True,)
-    user_id: Mapped[int] = mapped_column( Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
+    id: Mapped[int] = mapped_column(
+        Integer,
+        primary_key=True,
+    )
+    user_id: Mapped[int] = mapped_column(Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
     data: Mapped[dict] = mapped_column(JSON, nullable=False, default=dict)
-    status: Mapped[UserNotificationStatus] = mapped_column(IntEnum(UserNotificationStatus), nullable=False, default=UserStatus.PENDING, index=True)
+    status: Mapped[UserNotificationStatus] = mapped_column(
+        IntEnum(UserNotificationStatus), nullable=False, default=UserStatus.PENDING, index=True
+    )
     updated_at: Mapped[DateTime] = mapped_column(
         DateTime(timezone=True),
         server_default=func.now(),
         onupdate=func.now(),
     )
-    created_at: Mapped[DateTime] = mapped_column(
-        DateTime(timezone=True),
-        server_default=func.now(),
-        index=True
-    )
+    created_at: Mapped[DateTime] = mapped_column(DateTime(timezone=True), server_default=func.now(), index=True)

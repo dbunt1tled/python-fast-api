@@ -6,6 +6,7 @@ from src.core.di.container import Container
 from src.core.http.response.api_response_service import ApiResponseService
 from src.core.http.response.response import JsonApiResponse
 from src.core.log.log import Log
+from src.core.rabbit_mq.producer import AsyncRabbitMQProducer
 from src.core.settings.setting import Settings
 
 
@@ -29,6 +30,8 @@ class BaseController(ABC):
         data: Any | None = None,
         meta: dict[str, Any] | None = None,
         resource_type: str | None = None,
-        include: str | None = None
+        include: str | None = None,
     ) -> JsonApiResponse:
-        return await self.api_response_service.response(data=data, meta=meta, resource_type=resource_type, include=include)
+        return await self.api_response_service.response(
+            data=data, meta=meta, resource_type=resource_type, include=include
+        )

@@ -5,7 +5,9 @@ from src.core.enum.env import Env
 
 
 class Settings(BaseSettings):
-    model_config = SettingsConfigDict(validate_default=False, env_file=".env", env_file_encoding="utf-8", extra="ignore")
+    model_config = SettingsConfigDict(
+        validate_default=False, env_file=".env", env_file_encoding="utf-8", extra="ignore"
+    )
     environment: Env = Field(default=Env.PRODUCTION, validation_alias="ENVIRONMENT")
     sqlalchemy_database_uri: str = Field(default="", validation_alias="SQLALCHEMY_DATABASE_URI")
     x_api_key: str = Field(default="0077012a-8ae6-4fd8-b701-2a8ae64fd882", validation_alias="X_API_KEY")
@@ -26,5 +28,8 @@ class Settings(BaseSettings):
     loki_url: str = Field(default="", validation_alias="LOKI_URL")
     loki_enabled: bool = Field(default=False, validation_alias="LOKI_ENABLED")
     log_request: bool = Field(default=False, validation_alias="LOG_REQUEST")
+
+    rabbitmq_url: str = Field(default="amqp://guest:guest@localhost/", validation_alias="RABBITMQ_URL")
+
 
 app_config = Settings()  # type: ignore

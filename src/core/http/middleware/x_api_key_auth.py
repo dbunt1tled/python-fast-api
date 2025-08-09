@@ -1,4 +1,3 @@
-
 from starlette.middleware.base import BaseHTTPMiddleware, RequestResponseEndpoint
 from starlette.requests import Request
 from starlette.responses import Response
@@ -10,14 +9,12 @@ from src.core.service.hash_service import HashService
 
 
 class XApiKeyAuth(BaseHTTPMiddleware):
-    INCLUDED_PATHS: list[str] = [
-
-    ]
+    INCLUDED_PATHS: list[str] = []
 
     def __init__(
-            self,
-            app: ASGIApp,
-            hash_service: HashService,
+        self,
+        app: ASGIApp,
+        hash_service: HashService,
     ) -> None:
         super().__init__(app=app)
         self.hash_service = hash_service

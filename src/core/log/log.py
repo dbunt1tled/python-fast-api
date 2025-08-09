@@ -14,14 +14,14 @@ from src.core.log.formatter.loki import LokiJSONFormatter
 
 class Log:
     def __init__(
-            self,
-            app_name: str,
-            env: str,
-            service_name: str,
-            loki_url: str,
-            log_level: str = "DEBUG",
-            loki_enabled: bool = False,
-            log_format: str = "json"
+        self,
+        app_name: str,
+        env: str,
+        service_name: str,
+        loki_url: str,
+        log_level: str = "DEBUG",
+        loki_enabled: bool = False,
+        log_format: str = "json",
     ):
         self.app_name = app_name
         self.env = env
@@ -104,18 +104,13 @@ class Log:
             "method": request.method,
             "url": str(request.url),
             "client_ip": request.client.host if request.client else None,
-            "user_agent": request.headers.get("user-agent", "Unknown")
+            "user_agent": request.headers.get("user-agent", "Unknown"),
         }
 
         return LoggerAdapter(self.base_logger, context)
 
     def log_request_full(
-            self,
-            request: Request,
-            status_code: int,
-            body_request: str,
-            body_response: str,
-            duration_ms: float
+        self, request: Request, status_code: int, body_request: str, body_response: str, duration_ms: float
     ) -> None:
         request_logger = self.get_request_logger(request)
 
@@ -126,7 +121,7 @@ class Log:
             "status_code": status_code,
             "body_request": body_request,
             "body_response": body_response,
-            "duration_ms": round(duration_ms, 2)
+            "duration_ms": round(duration_ms, 2),
         }
 
         if status_code >= 500:
@@ -136,13 +131,7 @@ class Log:
         else:
             request_logger.info(message, **log_data)
 
-    def log_request_exception(
-            self,
-            request: Request,
-            e: BaseException,
-            body_request: str,
-            duration_ms: float
-    ) -> None:
+    def log_request_exception(self, request: Request, e: BaseException, body_request: str, duration_ms: float) -> None:
         request_logger = self.get_request_logger(request)
         message = "Request failed with exception"
         log_data = {
@@ -150,7 +139,7 @@ class Log:
             "content_length": request.headers.get("content-length"),
             "body_request": body_request,
             "exception_type": e.__class__.__name__,
-            "duration_ms": round(duration_ms, 2)
+            "duration_ms": round(duration_ms, 2),
         }
         if isinstance(e, DomainException):
             ex_data = e.as_dict()

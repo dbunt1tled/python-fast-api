@@ -9,9 +9,9 @@ from src.core.service.hash_service import HashService
 
 class BodySave(BaseHTTPMiddleware):
     def __init__(
-            self,
-            app: ASGIApp,
-            hash_service: HashService,
+        self,
+        app: ASGIApp,
+        hash_service: HashService,
     ) -> None:
         super().__init__(app=app)
         self.hash_service = hash_service

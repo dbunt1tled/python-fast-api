@@ -10,15 +10,13 @@ from src.core.http.response.response import JsonApiResponse
 
 
 class UserController(BaseController):
-
     def __init__(self, app: FastAPI, container: Container) -> None:
         super().__init__(container=container)
-        router = APIRouter(prefix="/users",tags=["users"])
+        router = APIRouter(prefix="/users", tags=["users"])
         router.add_api_route(path="", endpoint=self.list, methods=["GET"])
         router.add_api_route(path="", endpoint=self.create, methods=["POST"])
         router.add_api_route(path="/{user_id}", endpoint=self.view, methods=["GET"])
         app.include_router(router=router)
-
 
     async def list(self, req: UserListRequest = Depends()) -> JsonApiResponse:
         users = await self.container.user_service().all(
@@ -27,8 +25,8 @@ class UserController(BaseController):
             ],
             pagination=Pagination(
                 per_page=req.per_page or 10,
-                page= req.page or 1,
-            )
+                page=req.page or 1,
+            ),
         )
 
         return await self.response(data=users, include=req.include)
@@ -38,16 +36,17 @@ class UserController(BaseController):
         return await self.response(data=user, include=req.query_params.get("include", None))
 
     async def create(
-            self,
-            req: UserCreateRequest,
+        self,
+        req: UserCreateRequest,
     ) -> JsonApiResponse:
-        user = await self.container.user_service().one(filters=[
-            Filter("email", FilterOperator.EQ, req.email),
-        ])
+        user = await self.container.user_service().one(
+            filters=[
+                Filter("email", FilterOperator.EQ, req.email),
+            ]
+        )
         if user is not None:
             raise UnprocessableEntityException(
-                error_no=ErrorNo.USER_EMAIL_ALREADY_EXISTS,
-                message="User already exists"
+                error_no=ErrorNo.USER_EMAIL_ALREADY_EXISTS, message="User already exists"
             )
 
         user = req.to_user()

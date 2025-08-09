@@ -20,10 +20,10 @@ class LoggingRequest(BaseHTTPMiddleware):
         start_time = time.time()
         body_request = ""
         if request.method in ["POST", "PUT", "PATCH"]:
-            if not hasattr(request.state, 'body'):
+            if not hasattr(request.state, "body"):
                 return await call_next(request)
             body = request.state.body
-            body_request = body.decode('utf-8', errors='ignore')
+            body_request = body.decode("utf-8", errors="ignore")
             try:
                 parsed_json = json.loads(body_request)
                 parsed_json = filter_params(parsed_json)
@@ -41,19 +41,13 @@ class LoggingRequest(BaseHTTPMiddleware):
                 status_code=response.status_code,
                 body_request=body_request,
                 body_response=body_response,
-                duration_ms=duration_ms
+                duration_ms=duration_ms,
             )
-
 
             return response
 
         except Exception as e:
             duration_ms = (time.time() - start_time) * 1000
 
-            self.logger.log_request_exception(
-                request=request,
-                e=e,
-                body_request=body_request,
-                duration_ms=duration_ms
-            )
+            self.logger.log_request_exception(request=request, e=e, body_request=body_request, duration_ms=duration_ms)
             raise e

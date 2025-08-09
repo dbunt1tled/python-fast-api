@@ -35,16 +35,16 @@ class Colors:
     WHITE_WHITE = "\033[47m\033[37m"
 
     LEVEL_COLORS = {
-        'DEBUG': "🐛 " + GREEN_WHITE + BOLD + " DEBUG " + RESET,
-        'INFO': "💡 " + YELLOW_WHITE + BOLD + " INFO " + RESET,
-        'WARNING': "⚠️ " + YELLOW_WHITE + BOLD + " WARNING " + RESET,
-        'ERROR': "❌ " + RED_WHITE + BOLD + " ERROR " + RESET,
-        'CRITICAL': "🚨 " + MAGENTA_WHITE + BOLD + " CRITICAL " + RESET,
+        "DEBUG": "🐛 " + GREEN_WHITE + BOLD + " DEBUG " + RESET,
+        "INFO": "💡 " + YELLOW_WHITE + BOLD + " INFO " + RESET,
+        "WARNING": "⚠️ " + YELLOW_WHITE + BOLD + " WARNING " + RESET,
+        "ERROR": "❌ " + RED_WHITE + BOLD + " ERROR " + RESET,
+        "CRITICAL": "🚨 " + MAGENTA_WHITE + BOLD + " CRITICAL " + RESET,
     }
 
     @staticmethod
     def is_supported() -> bool:
-        return hasattr(sys.stdout, 'isatty') and sys.stdout.isatty()
+        return hasattr(sys.stdout, "isatty") and sys.stdout.isatty()
 
     @staticmethod
     def colorize_value(value: Any) -> str:
@@ -60,4 +60,3 @@ class Colors:
             return f"{Colors.BRIGHT_MAGENTA}{str(value)}{Colors.RESET}"
         else:
             return f"{Colors.BRIGHT_MAGENTA}{str(value)}{Colors.RESET}"
-

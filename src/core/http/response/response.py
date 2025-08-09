@@ -17,11 +17,13 @@ class JsonApiResource(BaseModel):
     attributes: dict[str, Any]
     relationships: dict[str, Any] | None = None
 
+
 class JsonApiResponse(BaseModel):
     data: JsonApiResource | list[JsonApiResource] | list[dict[str, Any]] | dict[str, Any] | None = None
     errors: list[dict[str, Any]] | None = None
     meta: dict[str, Any] | None = None
     included: list[JsonApiResource] | None = None
+
 
 class JsonApiError(BaseModel):
     id: str | None = None
@@ -30,6 +32,7 @@ class JsonApiError(BaseModel):
     title: str
     detail: str | list[str] | None = None
     source: dict[str, Any] | None = None
+
 
 class RelationshipType(str, Enum):
     HAS_ONE = "has_one"
@@ -53,6 +56,7 @@ class IncludeConfig:
     relationship_name: str
     service_method: str
     params: dict[str, Any] | None = None
+
 
 class ResponseBaseModel(ABC):
     def __init__(self, container: Container):
@@ -101,7 +105,9 @@ class ResponseBaseModel(ABC):
             param_name = param_name.replace("with", "").strip("_")
         return param_name
 
-    async def _process_relationship_for_list(self, data_list: list[Any] | Sequence[Any], config: RelationshipConfig) -> list[JsonApiResource]:
+    async def _process_relationship_for_list(
+        self, data_list: list[Any] | Sequence[Any], config: RelationshipConfig
+    ) -> list[JsonApiResource]:
         if not data_list:
             return []
 
@@ -163,7 +169,9 @@ class ResponseBaseModel(ABC):
         else:
             return [self.data_to_resource(related_data)]
 
-    def add_relationships_to_resource(self, resource: JsonApiResource, data: Any, included: dict[str, list[JsonApiResource]]) -> JsonApiResource:
+    def add_relationships_to_resource(
+        self, resource: JsonApiResource, data: Any, included: dict[str, list[JsonApiResource]]
+    ) -> JsonApiResource:
         if not included:
             return resource
 
@@ -177,15 +185,16 @@ class ResponseBaseModel(ABC):
 
             if config.relationship_type == RelationshipType.HAS_MANY:
                 relationships[relationship_name] = {
-                    "data": [{"type": res.type, "id": res.id} for res in related_resources
-                             if self._is_related_to_resource(data, res, config)]
+                    "data": [
+                        {"type": res.type, "id": res.id}
+                        for res in related_resources
+                        if self._is_related_to_resource(data, res, config)
+                    ]
                 }
             else:
                 related_res = self._find_related_resource(data, related_resources, config)
                 if related_res:
-                    relationships[relationship_name] = {
-                        "data": {"type": related_res.type, "id": related_res.id}
-                    }
+                    relationships[relationship_name] = {"data": {"type": related_res.type, "id": related_res.id}}
 
         if relationships:
             resource.relationships = relationships
@@ -205,7 +214,9 @@ class ResponseBaseModel(ABC):
         return False
 
     @staticmethod
-    def _find_related_resource(data: Any, resources: list[JsonApiResource], config: RelationshipConfig) -> JsonApiResource | None:
+    def _find_related_resource(
+        data: Any, resources: list[JsonApiResource], config: RelationshipConfig
+    ) -> JsonApiResource | None:
         if not hasattr(data, config.local_key):
             return None
 
@@ -223,6 +234,9 @@ class ResponseBaseModel(ABC):
         return JsonApiResource(
             type=resource_type,
             id=str(data.id if hasattr(data, "id") else ""),
-            attributes=data.to_dict(camel=True) if hasattr(data, "to_dict") else data.model_dump(by_alias=True) if hasattr(data, "model_dump") else data
+            attributes=data.to_dict(camel=True)
+            if hasattr(data, "to_dict")
+            else data.model_dump(by_alias=True)
+            if hasattr(data, "model_dump")
+            else data,
         )
-

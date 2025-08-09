@@ -11,8 +11,10 @@ class State(Protocol):
     user: User | None = None
     is_authenticated: bool = False
 
+
 class AuthState(State):
     user: User
+
 
 def get_state(request: Request) -> State:
     if not hasattr(request.state, "user"):
@@ -20,6 +22,7 @@ def get_state(request: Request) -> State:
     if not hasattr(request.state, "is_authenticated"):
         request.state.is_authenticated = False
     return cast(State, request.state)
+
 
 def get_auth_state(request: Request) -> AuthState:
     if (
@@ -29,7 +32,6 @@ def get_auth_state(request: Request) -> AuthState:
         or not request.state.is_authenticated
     ):
         raise UnauthorizedException(
-            error_no=ErrorNo.AUTHORIZATION_USER_NOT_AUTHENTICATED,
-            message="User is not authenticated"
+            error_no=ErrorNo.AUTHORIZATION_USER_NOT_AUTHENTICATED, message="User is not authenticated"
         )
     return cast(AuthState, request.state)
