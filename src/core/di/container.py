@@ -10,6 +10,7 @@ from src.core.log.log import Log
 from src.core.rabbit_mq.config import RabbitMQConfig
 from src.core.rabbit_mq.consumer import AsyncRabbitMQConsumer
 from src.core.rabbit_mq.producer import AsyncRabbitMQProducer
+from src.core.rabbit_mq.rmq_service import RMQService
 from src.core.service.email.app_mail_service import AppMailService
 from src.core.service.email.email_service import EmailService
 from src.core.service.email.view_service import ViewService
@@ -63,8 +64,11 @@ class Container(containers.DeclarativeContainer):
     )
 
     rmq_producer = providers.Singleton(AsyncRabbitMQProducer, config=rmq_config, log=log_rm)
-
     rmq_consumer = providers.Singleton(AsyncRabbitMQConsumer, config=rmq_config, log=log_rm)
+    rmq_service = providers.Singleton(
+        RMQService,
+        producer=rmq_producer,
+    )
 
     view_service = providers.Singleton(
         ViewService,
@@ -76,7 +80,7 @@ class Container(containers.DeclarativeContainer):
 
     app_email_service = providers.Singleton(
         AppMailService,
-        email_service=email_service,
+        rmq_service=rmq_service,
         view_service=view_service,
     )
     user_repository = providers.Singleton(

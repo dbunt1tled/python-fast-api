@@ -27,17 +27,6 @@ class AuthController(BaseController):
         app.include_router(router=router)
 
     async def login(self, req: LoginRequest) -> JsonApiResponse:
-        await self.rmq_producer().send_message(
-            queue_name="p_email",
-            message={
-                "action": EmailAction.send_email.value,
-                "to": req.email,
-                "subject": "Email confirmation",
-                "body": "Confirm your email",
-                "attachments": [],
-            },
-            exchange_name="p_email_exchange",
-        )
         token = await self.container.auth_service().login(email=req.email, password=req.password)
 
         return await self.response(data=Bearer.from_token(token))

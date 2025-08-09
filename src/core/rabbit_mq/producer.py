@@ -66,6 +66,7 @@ class AsyncRabbitMQProducer:
         queue_name: str,
         message: dict[str, Any] | str | bytes,
         exchange_name: str,
+        action: str | None = None,
         routing_key: str | None = None,
         priority: int = 0,
         expiration: int | None = None,
@@ -93,6 +94,8 @@ class AsyncRabbitMQProducer:
                 await queue.bind(exchange, routing_key=routing_key or queue_name)
 
                 if isinstance(message, dict):
+                    if action is not None:
+                        message["action"] = action
                     body = json.dumps(message, ensure_ascii=False).encode("utf-8")
                 elif isinstance(message, str):
                     body = message.encode("utf-8")

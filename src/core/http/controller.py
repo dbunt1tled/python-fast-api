@@ -25,9 +25,6 @@ class BaseController(ABC):
     def log(self) -> Log:
         return self.container.log()
 
-    def rmq_producer(self) -> AsyncRabbitMQProducer:
-        return self.container.rmq_producer()
-
     async def response(
         self,
         data: Any | None = None,

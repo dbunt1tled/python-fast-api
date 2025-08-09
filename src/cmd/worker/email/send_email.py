@@ -17,6 +17,7 @@ class SendEmailHandler(MessageHandler):
             body = context.payload.get("body")
             cc = context.payload.get("cc")
             bcc = context.payload.get("bcc")
+            body_type = context.payload.get("body_type")
             attachments = context.payload.get("attachments")
             if to is None or subject is None or body is None:
                 raise ValueError("🛑 Missing required fields in message")
@@ -27,6 +28,7 @@ class SendEmailHandler(MessageHandler):
                     bcc=[str(email) for email in bcc] if isinstance(bcc, list) else ([str(bcc)] if bcc else []),
                     subject=str(subject),
                     body=str(body),
+                    body_type=body_type or "html",
                     attachments=[str(attachment) for attachment in attachments]
                     if isinstance(attachments, list)
                     else ([str(attachments)] if attachments else []),
