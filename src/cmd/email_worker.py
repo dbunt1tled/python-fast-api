@@ -1,11 +1,7 @@
 import asyncio
 import sys
-from enum import Enum
 from pathlib import Path
 
-
-class EmailAction(Enum):
-    send_email = "send_email"
 
 def setup_path() -> None:
     script_dir = Path(__file__).parent.absolute()
@@ -30,7 +26,7 @@ async def main(loop: asyncio.AbstractEventLoop) -> int:
         )
         await worker.initialize(
             loop=loop,
-            handlers=[SendEmailHandler()]
+            handlers=[SendEmailHandler(container=container)]
         )
         try:
             await worker.start()

@@ -1,14 +1,14 @@
 import traceback
 
-from src.cmd.email_worker import EmailAction
+from src.cmd.worker.email.email_action import EmailAction
 from src.core.rabbit_mq.data import MessageContext, ProcessingResult
 from src.core.rabbit_mq.message_handler import MessageHandler
 from src.core.service.email.email import EMessage
 
 
 class SendEmailHandler(MessageHandler):
-    @staticmethod
-    def can_handle(action: str) -> bool:
+
+    def can_handle(self, action: str) -> bool:
         return action in [EmailAction.send_email.value]
 
     async def handle(self, context: MessageContext) -> ProcessingResult:

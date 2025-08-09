@@ -1,7 +1,12 @@
-from abc import ABC, abstractmethod
+from __future__ import annotations
 
-from src.core.di.container import Container
+from abc import ABC, abstractmethod
+from typing import TYPE_CHECKING
+
 from src.core.rabbit_mq.data import MessageContext, ProcessingResult
+
+if TYPE_CHECKING:
+    from src.core.di.container import Container
 
 
 class MessageHandler(ABC):
