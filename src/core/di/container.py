@@ -8,6 +8,7 @@ from src.app.user_notification.service.user_notification_service import UserNoti
 from src.core.db.asmysql import MyDatabaseConfig
 from src.core.log.log import Log
 from src.core.rabbit_mq.config import RabbitMQConfig
+from src.core.rabbit_mq.consumer import AsyncRabbitMQConsumer
 from src.core.rabbit_mq.producer import AsyncRabbitMQProducer
 from src.core.service.email.app_mail_service import AppMailService
 from src.core.service.email.email_service import EmailService
@@ -61,15 +62,17 @@ class Container(containers.DeclarativeContainer):
 
     rmq_config = providers.Singleton(
         RabbitMQConfig,
-        host=app_config.provided.rabbitmq_host,
-        port=app_config.provided.rabbitmq_port,
-        username=app_config.provided.rabbitmq_username,
-        password=app_config.provided.rabbitmq_password,
-        virtual_host=app_config.provided.rabbitmq_virtual_host
+        url=app_config.provided.rabbitmq_url,
     )
 
     rmq_producer = providers.Singleton(
         AsyncRabbitMQProducer,
+        config=rmq_config,
+        log=log_rm
+    )
+
+    rmq_consumer = providers.Singleton(
+        AsyncRabbitMQConsumer,
         config=rmq_config,
         log=log_rm
     )

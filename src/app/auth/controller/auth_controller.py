@@ -26,6 +26,11 @@ class AuthController(BaseController):
         app.include_router(router=router)
 
     async def login(self, req: LoginRequest) -> JsonApiResponse:
+        await self.rmq_producer().send_message(
+            queue_name="import_data_consumer",
+            message={"email": req.email,},
+            exchange_name="import_data",
+        )
         token = await self.container.auth_service().login(
             email=req.email,
             password=req.password
@@ -68,11 +73,12 @@ class AuthController(BaseController):
             )
         try:
             scheme, jwt = authorization.split(" ", 1)
-            if scheme.lower() != "bearer":
-                raise UnauthorizedException(error_no=ErrorNo.AUTHORIZATION_REFRESH_TOKEN_FORMAT_ERROR, message="Unauthorized!")
         except ValueError as e:
-            self.get_logger().error(str(e), exc_info=e)
-            raise UnauthorizedException(error_no=ErrorNo.AUTHORIZATION_REFRESH_TOKEN_INVALID, message="Unauthorized!")
+            self.log().error(str(e), exc_info=e)
+            raise UnauthorizedException(error_no=ErrorNo.AUTHORIZATION_REFRESH_TOKEN_INVALID, message="Unauthorized!", inner_exception=e)
+
+        if scheme.lower() != "bearer":
+            raise UnauthorizedException(error_no=ErrorNo.AUTHORIZATION_REFRESH_TOKEN_FORMAT_ERROR, message="Unauthorized!")
 
         token = await self.container.auth_service().refresh(jwt=jwt)
 

@@ -31,11 +31,7 @@ class AsyncRabbitMQProducer:
 
         try:
             self._conn = await aio_pika.connect_robust(
-                host=self.config.host,
-                port=self.config.port,
-                login=self.config.username,
-                password=self.config.password,
-                virtualhost=self.config.virtual_host,
+                url=self.config.url,
                 heartbeat=self.config.heartbeat,
                 connection_timeout=self.config.connection_timeout,
             )

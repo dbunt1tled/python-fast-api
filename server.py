@@ -4,6 +4,8 @@ from pathlib import Path
 from src.api import app
 
 sys.path.append(str(Path(__file__).parent))
+print(sys.path)
+print(str(Path(__file__).parent))
 if __name__ == "__main__":
     import uvicorn
 
