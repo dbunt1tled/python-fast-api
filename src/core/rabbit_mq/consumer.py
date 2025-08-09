@@ -108,11 +108,11 @@ class AsyncRabbitMQConsumer:
                 await message.reject(requeue=False)
                 return
 
-            self.logger.info(f"🧩🐇 Consumer start process message: {context.to_str()}")
+            self.logger.info(f"🪢🐇 Consumer start process message: {context.to_str()}")
             result = await handler.handle(context)
             if result == ProcessingResult.SUCCESS:
                 await message.ack()
-                self.logger.info(f"🪢🐇 Consumer processed message successfully: {context.to_str()}, {render_statistics(start_time=start_time)}")
+                self.logger.info(f"🧩🐇 Consumer processed message successfully: {context.to_str()}, {render_statistics(start_time=start_time)}")
             elif result == ProcessingResult.RETRY:
                 self.logger.info(f"♻️🐇 Consumer message requeued for retry: {context.to_str()}, {render_statistics(start_time=start_time)}")
                 await message.reject(requeue=True)
