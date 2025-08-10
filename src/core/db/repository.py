@@ -16,7 +16,7 @@ from src.core.exception.exceptions import DomainException
 T = TypeVar("T", bound=Entity)
 
 
-class FilterOperator(Enum):
+class Oper(Enum):
     EQ = "eq"
     NE = "ne"
     GT = "gt"
@@ -45,25 +45,25 @@ class FilterOperator(Enum):
 @dataclass
 class Filter:
     field: str
-    operator: FilterOperator
+    operator: Oper
     value: Any = None
     json_path: str | None = None  # For JSON operations like '$.roles[*].name'
 
     def __post_init__(self) -> None:
         # Validate filter based on operator
-        if self.operator in [FilterOperator.IS_NULL, FilterOperator.IS_NOT_NULL]:
+        if self.operator in [Oper.IS_NULL, Oper.IS_NOT_NULL]:
             self.value = None
-        elif self.operator == FilterOperator.BETWEEN and (
+        elif self.operator == Oper.BETWEEN and (
             not isinstance(self.value, (list, tuple)) or len(self.value) != 2
         ):
             raise ValueError("BETWEEN operator requires exactly two values")
         elif (
             self.operator
             in [
-                FilterOperator.JSON_EXTRACT,
-                FilterOperator.JSON_EXTRACT_TEXT,
-                FilterOperator.JSON_CONTAINS_PATH,
-                FilterOperator.JSON_LENGTH,
+                Oper.JSON_EXTRACT,
+                Oper.JSON_EXTRACT_TEXT,
+                Oper.JSON_CONTAINS_PATH,
+                Oper.JSON_LENGTH,
             ]
             and not self.json_path
         ):
@@ -121,21 +121,21 @@ class BaseRepository(ABC, Generic[T]):
 
     async def get_by_id(
         self,
-        id_value: Any,
+        uid: Any,
     ) -> T:
-        obj = await self.find_by_id(id_value)
+        obj = await self.find_by_id(uid)
         if obj is None:
             raise DomainException(
                 error_no=ErrorNo.REPOSITORY_DATA_BY_ID_NOT_FOUND,
-                message=f"{self._model.__name__} with {self._id_field}={id_value} not found",
+                message=f"{self._model.__name__} with {self._id_field}={uid} not found",
             )
         return obj
 
     async def find_by_id(
         self,
-        id_value: Any,
+        uid: Any,
     ) -> T | None:
-        query = select(self._model).where(getattr(self._model, self._id_field) == id_value)
+        query = select(self._model).where(getattr(self._model, self._id_field) == uid)
         async with self.get_session() as session:
             result = await session.execute(query)
             return result.scalar_one_or_none()
@@ -153,7 +153,7 @@ class BaseRepository(ABC, Generic[T]):
 
     async def update(
         self,
-        id_value: Any,
+        uid: Any,
         data: dict[str, Any] | T,
     ) -> T:
         if isinstance(data, dict):
@@ -161,7 +161,7 @@ class BaseRepository(ABC, Generic[T]):
         else:
             d = data.__dict__
 
-        entity = await self.get_by_id(id_value)
+        entity = await self.get_by_id(uid)
 
         for field, value in d.items():
             if hasattr(entity, field):
@@ -181,8 +181,8 @@ class BaseRepository(ABC, Generic[T]):
             result = await session.execute(query)
             return result.rowcount or 0
 
-    async def delete(self, id_value: Any) -> bool:
-        db_obj = await self.find_by_id(id_value)
+    async def delete(self, uid: Any) -> bool:
+        db_obj = await self.find_by_id(uid)
         if db_obj is None:
             return False
 
@@ -285,59 +285,59 @@ class BaseRepository(ABC, Generic[T]):
         for filter_item in filters:
             field = getattr(self._model, filter_item.field)
 
-            if filter_item.operator == FilterOperator.IS_NULL:
+            if filter_item.operator == Oper.IS_NULL:
                 conditions.append(field.is_(None))
-            elif filter_item.operator == FilterOperator.IS_NOT_NULL:
+            elif filter_item.operator == Oper.IS_NOT_NULL:
                 conditions.append(field.is_not(None))
 
             if filter_item.value is not None:
-                if filter_item.operator == FilterOperator.EQ:
+                if filter_item.operator == Oper.EQ:
                     conditions.append(field == filter_item.value)
-                elif filter_item.operator == FilterOperator.NE:
+                elif filter_item.operator == Oper.NE:
                     conditions.append(field != filter_item.value)
-                elif filter_item.operator == FilterOperator.GT:
+                elif filter_item.operator == Oper.GT:
                     conditions.append(field > filter_item.value)
-                elif filter_item.operator == FilterOperator.LT:
+                elif filter_item.operator == Oper.LT:
                     conditions.append(field < filter_item.value)
-                elif filter_item.operator == FilterOperator.GTE:
+                elif filter_item.operator == Oper.GTE:
                     conditions.append(field >= filter_item.value)
-                elif filter_item.operator == FilterOperator.LTE:
+                elif filter_item.operator == Oper.LTE:
                     conditions.append(field <= filter_item.value)
-                elif filter_item.operator == FilterOperator.LIKE:
+                elif filter_item.operator == Oper.LIKE:
                     conditions.append(field.like(filter_item.value))
-                elif filter_item.operator == FilterOperator.ILIKE:
+                elif filter_item.operator == Oper.ILIKE:
                     conditions.append(field.ilike(filter_item.value))
-                elif filter_item.operator == FilterOperator.IN:
+                elif filter_item.operator == Oper.IN:
                     conditions.append(field.in_(filter_item.value))
-                elif filter_item.operator == FilterOperator.NOT_IN:
+                elif filter_item.operator == Oper.NOT_IN:
                     conditions.append(~field.in_(filter_item.value))
-                elif filter_item.operator == FilterOperator.BETWEEN:
+                elif filter_item.operator == Oper.BETWEEN:
                     conditions.append(field.between(filter_item.value[0], filter_item.value[1]))
 
-            if filter_item.operator == FilterOperator.CONTAINS:
+            if filter_item.operator == Oper.CONTAINS:
                 conditions.append(field.contains(filter_item.value))
-            elif filter_item.operator == FilterOperator.STARTSWITH:
+            elif filter_item.operator == Oper.STARTSWITH:
                 conditions.append(field.startswith(filter_item.value))
-            elif filter_item.operator == FilterOperator.ENDSWITH:
+            elif filter_item.operator == Oper.ENDSWITH:
                 conditions.append(field.endswith(filter_item.value))
             # JSON operators
-            elif filter_item.operator == FilterOperator.JSON_EXTRACT:
+            elif filter_item.operator == Oper.JSON_EXTRACT:
                 # Extract value: field->'$.path' = value
                 conditions.append(field.op("->")(filter_item.json_path) == filter_item.value)
-            elif filter_item.operator == FilterOperator.JSON_EXTRACT_TEXT:
+            elif filter_item.operator == Oper.JSON_EXTRACT_TEXT:
                 # Extract text value: field->>'$.path' = value
                 conditions.append(field.op("->>")(filter_item.json_path) == filter_item.value)
-            elif filter_item.operator == FilterOperator.JSON_CONTAINS:
+            elif filter_item.operator == Oper.JSON_CONTAINS:
                 # Check if JSON contains value: JSON_CONTAINS(field, value)
                 from sqlalchemy import func
 
                 conditions.append(func.json_contains(field, filter_item.value))
-            elif filter_item.operator == FilterOperator.JSON_CONTAINS_PATH:
+            elif filter_item.operator == Oper.JSON_CONTAINS_PATH:
                 # Check if path exists: JSON_CONTAINS_PATH(field, path)
                 from sqlalchemy import func
 
                 conditions.append(func.json_contains_path(field, filter_item.json_path))
-            elif filter_item.operator == FilterOperator.JSON_ARRAY_CONTAINS:
+            elif filter_item.operator == Oper.JSON_ARRAY_CONTAINS:
                 # Check if JSON array contains value
                 from sqlalchemy import func
 
@@ -352,7 +352,7 @@ class BaseRepository(ABC, Generic[T]):
                 else:
                     # Check entire field
                     conditions.append(func.json_contains(field, filter_item.value))
-            elif filter_item.operator == FilterOperator.JSON_LENGTH:
+            elif filter_item.operator == Oper.JSON_LENGTH:
                 # Get length of JSON array/object: JSON_LENGTH(field, path) = value
                 from sqlalchemy import func
 

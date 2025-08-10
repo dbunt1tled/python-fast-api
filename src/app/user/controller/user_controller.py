@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends, FastAPI, Request
 
 from src.app.user.dto.user import UserCreateRequest, UserListRequest
-from src.core.db.repository import Filter, FilterOperator, Pagination
+from src.core.db.repository import Filter, Oper, Pagination
 from src.core.di.container import Container
 from src.core.exception.error_no import ErrorNo
 from src.core.exception.exceptions import UnprocessableEntityException
@@ -21,7 +21,7 @@ class UserController(BaseController):
     async def list(self, req: UserListRequest = Depends()) -> JsonApiResponse:
         users = await self.container.user_service().all(
             filters=[
-                Filter("email", FilterOperator.EQ, req.email),
+                Filter("email", Oper.EQ, req.email),
             ],
             pagination=Pagination(
                 per_page=req.per_page or 10,
@@ -41,7 +41,7 @@ class UserController(BaseController):
     ) -> JsonApiResponse:
         user = await self.container.user_service().one(
             filters=[
-                Filter("email", FilterOperator.EQ, req.email),
+                Filter("email", Oper.EQ, req.email),
             ]
         )
         if user is not None:

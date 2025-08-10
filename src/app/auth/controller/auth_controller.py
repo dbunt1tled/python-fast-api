@@ -6,7 +6,7 @@ from src.app.auth.dto.login import LoginRequest
 from src.app.auth.dto.re_send_confirm_email import ReSendConfirmEmailRequest
 from src.app.auth.dto.sign_up import SignupRequest
 from src.cmd.worker.email.email_action import EmailAction
-from src.core.db.repository import Filter, FilterOperator
+from src.core.db.repository import Filter, Oper
 from src.core.di.container import Container
 from src.core.dto.dto import Message
 from src.core.exception.error_no import ErrorNo
@@ -42,7 +42,7 @@ class AuthController(BaseController):
         res = Message(message="Email successfully sent")
         user = await self.container.user_service().one(
             filters=[
-                Filter("email", FilterOperator.EQ, req.email),
+                Filter("email", Oper.EQ, req.email),
             ]
         )
         if user is None:

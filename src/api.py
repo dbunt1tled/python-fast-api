@@ -10,6 +10,7 @@ from starlette.responses import JSONResponse
 from src.app.auth.controller.auth_controller import AuthController
 from src.app.user.controller.user_controller import UserController
 from src.app.user_notification.controller.user_notification_controller import UserNotificationController
+from src.app.ws.route.ws_controller import WSController
 from src.core.di.container import Container
 from src.core.enum.env import Env
 from src.core.exception.error_no import ErrorNo
@@ -30,8 +31,12 @@ async def lifespan(api: FastAPI) -> AsyncGenerator[None]:
     AuthController(app=api, container=container)
     UserController(app=api, container=container)
     UserNotificationController(app=api, container=container)
+    WSController(app=api, container=container)
     yield
     await container.db_config().close()
+    await container.rmq_producer().close()
+    await container.rmq_consumer().close()
+    await container.ws_manager().close_all()
     container.unwire()
 
 
@@ -83,7 +88,7 @@ async def exception_handler(request: Request, e: Exception) -> JSONResponse:
         raise ValueError(e.args)
 
     if isinstance(e, RequestValidationError):
-        error = ApiResponseService.format_pydantic_error(errors=e.errors(), env=di.app_config().environment)
+        error = ApiResponseService.format_pydantic_error(errors=e.errors())
         di.log().error(message=f"RequestValidationError: {e}", error=str(error), request=req)
     elif isinstance(e, DomainException):
         e_data = e.as_dict()

@@ -10,17 +10,17 @@ class UserService:
     def __init__(self, user_repository: UserRepository) -> None:
         self.user_repository = user_repository
 
-    async def get_by_id(self, id_value: int) -> User:
-        return await self.user_repository.get_by_id(id_value=id_value)
+    async def get_by_id(self, uid: int) -> User:
+        return await self.user_repository.get_by_id(uid=uid)
 
-    async def find_by_id(self, id_value: int) -> User | None:
-        return await self.user_repository.find_by_id(id_value=id_value)
+    async def find_by_id(self, uid: int) -> User | None:
+        return await self.user_repository.find_by_id(uid=uid)
 
     async def create(self, data: dict[str, Any] | User) -> User:
         return await self.user_repository.create(data=data)
 
-    async def update(self, id_value: int, data: dict[str, Any]) -> User:
-        return await self.user_repository.update(id_value=id_value, data=data)
+    async def update(self, uid: int, data: dict[str, Any]) -> User:
+        return await self.user_repository.update(uid=uid, data=data)
 
     async def one(
         self,

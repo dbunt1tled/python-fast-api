@@ -8,7 +8,7 @@ from dependency_injector.containers import Container
 from pydantic import BaseModel
 from pydantic.alias_generators import to_camel
 
-from src.core.db.repository import Filter, FilterOperator
+from src.core.db.repository import Filter, Oper
 
 
 class JsonApiResource(BaseModel):
@@ -127,13 +127,13 @@ class ResponseBaseModel(ABC):
             if config.relationship_type == RelationshipType.HAS_MANY:
                 related_data = await service.all(
                     filters=[
-                        Filter(config.foreign_key, FilterOperator.IN, ids),
+                        Filter(config.foreign_key, Oper.IN, ids),
                     ],
                 )
             else:
                 related_data = await service.all(
                     filters=[
-                        Filter("id", FilterOperator.IN, ids),
+                        Filter("id", Oper.IN, ids),
                     ],
                 )
 
@@ -155,7 +155,7 @@ class ResponseBaseModel(ABC):
             if config.relationship_type == RelationshipType.HAS_MANY:
                 related_data = await service.all(
                     filters=[
-                        Filter(config.foreign_key, FilterOperator.EQ, local_id),
+                        Filter(config.foreign_key, Oper.EQ, local_id),
                     ],
                 )
             else:
