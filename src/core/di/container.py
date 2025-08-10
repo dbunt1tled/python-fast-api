@@ -5,6 +5,8 @@ from src.app.user.repository.user_repository import UserRepository
 from src.app.user.service.user_service import UserService
 from src.app.user_notification.repository.user_notification_repository import UserNotificationRepository
 from src.app.user_notification.service.user_notification_service import UserNotificationService
+from src.app.user_notification.service.ws_notification_service import WSNotificationService
+from src.app.ws.service.ws_service import WSService
 from src.core.db.asmysql import MyDatabaseConfig
 from src.core.log.log import Log
 from src.core.rabbit_mq.config import RabbitMQConfig
@@ -16,6 +18,7 @@ from src.core.service.email.email_service import EmailService
 from src.core.service.email.view_service import ViewService
 from src.core.service.hash_service import HashService
 from src.core.settings.setting import Settings
+from src.core.web_socket.ws_manager import WSManager
 
 
 class Container(containers.DeclarativeContainer):
@@ -99,6 +102,26 @@ class Container(containers.DeclarativeContainer):
     user_notification_service = providers.Singleton(
         UserNotificationService,
         user_notification_repository=user_notification_repository,
+    )
+
+    ws_manager = providers.Singleton(
+        WSManager,
+        log=log,
+    )
+
+    ws_notification_service = providers.Singleton(
+        WSNotificationService,
+        user_notification_service=user_notification_service,
+        ws_manager=ws_manager,
+        log=log,
+    )
+
+    ws_service = providers.Singleton(
+        WSService,
+        ws_manager=ws_manager,
+        hash_service=hash_service,
+        services=providers.List(ws_notification_service),
+        log=log,
     )
 
     auth_service = providers.Singleton(

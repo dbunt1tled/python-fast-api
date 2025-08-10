@@ -29,7 +29,7 @@ class StandaloneApplication(BaseApplication):
 if __name__ == "__main__":
     options = {
         "bind": "0.0.0.0:8000",
-        "workers": 1, # multiprocessing.cpu_count() * 2 + 1,
-        "worker_class": "uvicorn.workers.UvicornWorker",
+        "workers": 3, # multiprocessing.cpu_count() * 2 + 1,
+        "worker_class": "uvicorn_worker.UvicornWorker",
     }
     StandaloneApplication(application=app, option=options).run()

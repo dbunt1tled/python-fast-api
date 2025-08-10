@@ -24,6 +24,7 @@ class AuthBearer(BaseHTTPMiddleware):
         "/auth/re-send-confirm-email",
         "/auth/confirm-email",
         "/health",
+        "/ws",
     ]
 
     def __init__(self, app: ASGIApp, user_service: UserService, hash_service: HashService) -> None:

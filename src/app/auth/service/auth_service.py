@@ -2,7 +2,7 @@ from src.app.user.data.role import Role
 from src.app.user.data.user_status import UserStatus
 from src.app.user.model.user import User
 from src.app.user.service.user_service import UserService
-from src.core.db.repository import Filter, FilterOperator
+from src.core.db.repository import Filter, Oper
 from src.core.exception.error_no import ErrorNo
 from src.core.exception.exceptions import UnauthorizedException, UnprocessableEntityException
 from src.core.service.dto.token import TokenBearer, TokenType
@@ -24,7 +24,7 @@ class AuthService:
     async def login(self, email: str, password: str) -> TokenBearer:
         user = await self.user_service.one(
             filters=[
-                Filter("email", FilterOperator.EQ, email),
+                Filter("email", Oper.EQ, email),
             ]
         )
         if user is None:
@@ -34,7 +34,7 @@ class AuthService:
 
         if not self.hash_service.verify_password(password=password, hashed_password=user.hash_password):
             raise UnauthorizedException(error_no=ErrorNo.AUTHORIZATION_USER_PASSWORD_INVALID, message="Unauthorized!")
-        user = await self.user_service.update(id_value=user.id, data={"session": self.hash_service.random_string()})
+        user = await self.user_service.update(uid=user.id, data={"session": self.hash_service.random_string()})
 
         return self.hash_service.create_token_bearer(user=user)
 
@@ -47,7 +47,7 @@ class AuthService:
     ) -> User:
         user = await self.user_service.one(
             filters=[
-                Filter("email", FilterOperator.EQ, email),
+                Filter("email", Oper.EQ, email),
             ]
         )
         if user is not None:
@@ -88,7 +88,7 @@ class AuthService:
             )
         user = await self.user_service.one(
             filters=[
-                Filter("email", FilterOperator.EQ, token.email),
+                Filter("email", Oper.EQ, token.email),
             ]
         )
         if user is None:
@@ -99,7 +99,7 @@ class AuthService:
             raise UnprocessableEntityException(
                 error_no=ErrorNo.CONFIRM_TOKEN_USER_SESSION_INVALID, message="Confirmation token is invalid"
             )
-        await self.user_service.update(id_value=user.id, data={"status": UserStatus.ACTIVE})
+        await self.user_service.update(uid=user.id, data={"status": UserStatus.ACTIVE})
 
     async def refresh(self, jwt: str) -> TokenBearer:
         token = self.hash_service.verify_token(token=jwt)
@@ -108,7 +108,7 @@ class AuthService:
         if token.token_type != TokenType.REFRESH:
             raise UnauthorizedException(error_no=ErrorNo.REFRESH_TOKEN_TYPE_INVALID, message="Unauthorized!")
 
-        user = await self.user_service.get_by_id(id_value=int(token.subject))
+        user = await self.user_service.get_by_id(uid=int(token.subject))
         if user is None:
             raise UnauthorizedException(error_no=ErrorNo.REFRESH_TOKEN_USER_NOT_FOUND, message="Unauthorized!")
         if user.status != UserStatus.ACTIVE:
@@ -117,6 +117,6 @@ class AuthService:
         if user.session != token.session:
             raise UnauthorizedException(error_no=ErrorNo.REFRESH_TOKEN_USER_SESSION_INVALID, message="Unauthorized!")
 
-        user = await self.user_service.update(id_value=user.id, data={"session": self.hash_service.random_string()})
+        user = await self.user_service.update(uid=user.id, data={"session": self.hash_service.random_string()})
 
         return self.hash_service.create_token_bearer(user=user)

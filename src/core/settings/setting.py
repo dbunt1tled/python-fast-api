@@ -33,15 +33,11 @@ class Settings(BaseSettings):
 
     rabbitmq_url: str = Field(default="amqp://guest:guest@localhost/", validation_alias="RABBITMQ_URL")
 
-    # CORS Settings
-    cors_allow_origins: List[str] = Field(default=["*"], validation_alias="CORS_ALLOW_ORIGINS")
+    cors_allow_origins: list[str] = Field(default=["*"], validation_alias="CORS_ALLOW_ORIGINS")
     cors_allow_credentials: bool = Field(default=True, validation_alias="CORS_ALLOW_CREDENTIALS")
-    cors_allow_methods: List[str] = Field(default=["*"], validation_alias="CORS_ALLOW_METHODS")
-    cors_allow_headers: List[str] = Field(default=["*"], validation_alias="CORS_ALLOW_HEADERS")
-    cors_expose_headers: List[str] = Field(
-        default=["X-Total-Count", "X-Per-Page", "X-Current-Page", "X-Total-Pages", "X-User-Role"],
-        validation_alias="CORS_EXPOSE_HEADERS"
-    )
+    cors_allow_methods: list[str] = Field(default=["*"], validation_alias="CORS_ALLOW_METHODS")
+    cors_allow_headers: list[str] = Field(default=["*"], validation_alias="CORS_ALLOW_HEADERS")
+    cors_expose_headers: list[str] = Field(default=["*"], validation_alias="CORS_EXPOSE_HEADERS")
 
 
 app_config = Settings()  # type: ignore

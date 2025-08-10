@@ -1,7 +1,8 @@
 import json
 import re
 from collections.abc import Generator
-from typing import Any, TypeVar
+from enum import Enum
+from typing import Any, TypeVar, Type
 
 from fastapi import Request
 
@@ -9,6 +10,15 @@ T = TypeVar("T")
 
 invert_case_regex = re.compile(r"(?<!^)(?=[A-Z])")
 
+def is_enum_value(enum_class: Type[Enum], value: Any) -> bool:
+    try:
+        enum_class(value)
+        return True
+    except (ValueError, TypeError):
+        return False
+
+def is_enum_member(enum_class: Type[Enum], name: str) -> bool:
+    return name in enum_class.__members__
 
 def chunked(iterable: list[T], size: int) -> Generator[list[T]]:
     for i in range(0, len(iterable), size):

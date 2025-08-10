@@ -1,4 +1,6 @@
-from sqlalchemy import JSON, DateTime, Integer, String, ForeignKey
+from datetime import datetime
+
+from sqlalchemy import JSON, DateTime, ForeignKey, Integer
 from sqlalchemy.orm import Mapped, mapped_column
 from sqlalchemy.sql import func
 
@@ -18,11 +20,13 @@ class UserNotification(Entity):
     user_id: Mapped[int] = mapped_column(Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
     data: Mapped[dict] = mapped_column(JSON, nullable=False, default=dict)
     status: Mapped[UserNotificationStatus] = mapped_column(
-        IntEnum(UserNotificationStatus), nullable=False, default=UserStatus.PENDING, index=True
+        IntEnum(UserNotificationStatus), nullable=False, default=UserNotificationStatus.NEW, index=True
     )
-    updated_at: Mapped[DateTime] = mapped_column(
+    updated_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True),
         server_default=func.now(),
         onupdate=func.now(),
     )
-    created_at: Mapped[DateTime] = mapped_column(DateTime(timezone=True), server_default=func.now(), index=True)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now(), index=True
+    )
