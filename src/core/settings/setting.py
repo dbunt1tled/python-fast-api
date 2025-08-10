@@ -1,3 +1,5 @@
+from typing import List
+
 from pydantic import Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
@@ -30,6 +32,16 @@ class Settings(BaseSettings):
     log_request: bool = Field(default=False, validation_alias="LOG_REQUEST")
 
     rabbitmq_url: str = Field(default="amqp://guest:guest@localhost/", validation_alias="RABBITMQ_URL")
+
+    # CORS Settings
+    cors_allow_origins: List[str] = Field(default=["*"], validation_alias="CORS_ALLOW_ORIGINS")
+    cors_allow_credentials: bool = Field(default=True, validation_alias="CORS_ALLOW_CREDENTIALS")
+    cors_allow_methods: List[str] = Field(default=["*"], validation_alias="CORS_ALLOW_METHODS")
+    cors_allow_headers: List[str] = Field(default=["*"], validation_alias="CORS_ALLOW_HEADERS")
+    cors_expose_headers: List[str] = Field(
+        default=["X-Total-Count", "X-Per-Page", "X-Current-Page", "X-Total-Pages", "X-User-Role"],
+        validation_alias="CORS_EXPOSE_HEADERS"
+    )
 
 
 app_config = Settings()  # type: ignore
