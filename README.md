@@ -10,17 +10,19 @@ A modern, production-ready FastAPI boilerplate with built-in authentication, use
 - **JWT Authentication** - Secure token-based authentication
 - **Pydantic v2** - Data validation and settings management
 - **Dependency Injection** - Clean architecture with dependency injection
+- **RabbitMQ Integration** - Message queuing for background tasks and email notifications
 - **Async MySQL** - Async database support with aiomysql
 - **Environment Configuration** - Easy environment variable management
 - **CORS** - Built-in CORS middleware
 - **Structured Logging** - Ready for production logging with Loki support
 - **Type Hints** - Full Python type support
-- **Email Service** - Built-in email service for user notifications
+- **Email Service** - Built-in email service for user notifications with queue support
 
 ## 📦 Prerequisites
 
 - Python 3.13
 - MySQL 8.0
+- RabbitMQ 3.x - Message broker for background tasks
 - [uv](https://github.com/astral-sh/uv) - Fast Python package installer and resolver
 
 ## 🛠️ Installation
@@ -66,6 +68,17 @@ API documentation:
 - Swagger UI: `http://localhost:8000/docs`
 - ReDoc: `http://localhost:8000/redoc`
 
+### Running Background Workers
+
+The application uses RabbitMQ for background task processing. To process email notifications in the background:
+
+```bash
+# Start the email worker
+python src/cmd/email_worker.py
+```
+
+This worker connects to RabbitMQ and processes email tasks from the queue, allowing the main application to continue processing requests without waiting for emails to be sent.
+
 ## 🏗️ Project Structure
 
 ```
@@ -74,11 +87,15 @@ src/
 │   ├── auth/              # Authentication module
 │   ├── user/              # User management
 │   └── user_notification/ # Notification system
+├── cmd/                    # Command-line tools
+│   └── worker/            # Background workers
+│       └── email/         # Email processing workers
 ├── core/                  # Core functionality
 │   ├── di/               # Dependency injection
 │   ├── exception/         # Custom exceptions
 │   ├── http/             # HTTP-related code
 │   ├── log/              # Logging configuration
+│   ├── rabbit_mq/        # RabbitMQ integration
 │   ├── service/          # Core services
 │   └── settings/         # Application settings
 └── database/              # Database configuration
@@ -132,6 +149,10 @@ SMTP_SERVER="smtp.gmail.com"
 SMTP_PORT=587
 APP_PASSWORD="YOUR_PASSWORD"
 FROM_EMAIL="YOUR_EMAIL"
+APP_URL="http://localhost:8000"
+
+# RabbitMQ
+RABBITMQ_URL="amqp://guest:guest@localhost/"
 ```
 
 ## 🧪 Testing
