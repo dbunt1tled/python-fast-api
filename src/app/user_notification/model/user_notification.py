@@ -27,6 +27,4 @@ class UserNotification(Entity):
         server_default=func.now(),
         onupdate=func.now(),
     )
-    created_at: Mapped[datetime] = mapped_column(
-        DateTime(timezone=True), server_default=func.now(), index=True
-    )
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), index=True)

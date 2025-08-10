@@ -12,7 +12,7 @@ class WSHandler:
     async def remove_connection(self, user_id: str, websocket: WebSocket) -> None:
         raise NotImplementedError
 
-    async def process_message(self, user_id: str,message: dict[str, Any], websocket: WebSocket) -> None:
+    async def process_message(self, user_id: str, message: dict[str, Any], websocket: WebSocket) -> None:
         raise NotImplementedError
 
     @staticmethod

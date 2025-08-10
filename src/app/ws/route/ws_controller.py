@@ -13,16 +13,15 @@ class WSController(BaseController):
         app.add_api_websocket_route(path="/ws/{user_id}", endpoint=self.connect)
 
     async def connect(
-            self,
-            websocket: WebSocket,
-            user_id: str,
+        self,
+        websocket: WebSocket,
+        user_id: str,
     ) -> None:
         ws_service = self.container.ws_service()
         try:
             await ws_service.add_connection(user_id, websocket)
-            while True:
+            async for data in websocket.iter_text():
                 try:
-                    data = await websocket.receive_text()
                     message = json.loads(data)
 
                     await ws_service.process_message(user_id=user_id, message=message, websocket=websocket)
@@ -39,4 +38,3 @@ class WSController(BaseController):
             self.logger.error(f"WebSocket error for user {user_id}: {e}")
         finally:
             await ws_service.remove_connection(user_id=user_id, websocket=websocket)
-

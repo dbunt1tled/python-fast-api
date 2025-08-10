@@ -8,8 +8,8 @@ from src.core.log.log import Log
 
 class WSManager:
     def __init__(
-            self,
-            log: Log,
+        self,
+        log: Log,
     ) -> None:
         self._connections: dict[str, set[WebSocket]] = {}
         self._lock = asyncio.Lock()
@@ -32,7 +32,7 @@ class WSManager:
                 self._connections.pop(user_id, None)
         self.log.info(f"🍎 WebSocket disconnected: {user_id}")
 
-    async def send_to_user(self, user_id: str, data: dict[str, Any], websocket: WebSocket|None = None) -> int:
+    async def send_to_user(self, user_id: str, data: dict[str, Any], websocket: WebSocket | None = None) -> int:
         conns = list(self._connections.get(user_id, []))
         if not conns:
             self.log.debug(f"🍊 WebSocket No active ws for user {user_id}")

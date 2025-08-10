@@ -53,9 +53,7 @@ class Filter:
         # Validate filter based on operator
         if self.operator in [Oper.IS_NULL, Oper.IS_NOT_NULL]:
             self.value = None
-        elif self.operator == Oper.BETWEEN and (
-            not isinstance(self.value, (list, tuple)) or len(self.value) != 2
-        ):
+        elif self.operator == Oper.BETWEEN and (not isinstance(self.value, (list, tuple)) or len(self.value) != 2):
             raise ValueError("BETWEEN operator requires exactly two values")
         elif (
             self.operator

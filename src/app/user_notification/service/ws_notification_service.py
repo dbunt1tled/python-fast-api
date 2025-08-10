@@ -13,10 +13,10 @@ from src.core.web_socket.ws_manager import WSManager
 
 class WSNotificationService(WSHandler):
     def __init__(
-            self,
-            user_notification_service: UserNotificationService,
-            ws_manager: WSManager,
-            log: Log,
+        self,
+        user_notification_service: UserNotificationService,
+        ws_manager: WSManager,
+        log: Log,
     ) -> None:
         self.user_notification_service = user_notification_service
         self.ws_manager = ws_manager
@@ -32,14 +32,16 @@ class WSNotificationService(WSHandler):
                     "data": {
                         "message": notification.data.get("message"),
                         "status": notification.status.value,
-                        "createdAt": notification.created_at.isoformat() if isinstance(notification.created_at, datetime) else str(notification.created_at),
-                    }
+                        "createdAt": notification.created_at.isoformat()
+                        if isinstance(notification.created_at, datetime)
+                        else str(notification.created_at),
+                    },
                 },
                 websocket=websocket,
             )
         self.log.info(f"WS connect: user {user_id}, {len(notifications)} notifications sent")
 
-    async def process_message(self, user_id: str,message: dict[str, Any], websocket: WebSocket) -> None:
+    async def process_message(self, user_id: str, message: dict[str, Any], websocket: WebSocket) -> None:
         message_type = WSType(message.get("type", WSType.UNKNOWN.value))
         if message_type == WSType.USER_NOTIFICATION:
             await self.user_notification_service.create(
@@ -68,12 +70,13 @@ class WSNotificationService(WSHandler):
                     "data": {
                         "message": notification.data.get("message"),
                         "status": notification.status.value,
-                        "createdAt": notification.created_at.isoformat() if isinstance(notification.created_at, datetime) else str(notification.created_at),
-                    }
+                        "createdAt": notification.created_at.isoformat()
+                        if isinstance(notification.created_at, datetime)
+                        else str(notification.created_at),
+                    },
                 },
             )
             return
-
 
     async def remove_connection(self, user_id: str, websocket: WebSocket) -> None:
         pass

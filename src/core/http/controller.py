@@ -6,7 +6,6 @@ from src.core.di.container import Container
 from src.core.http.response.api_response_service import ApiResponseService
 from src.core.http.response.response import JsonApiResponse
 from src.core.log.log import Log
-from src.core.rabbit_mq.producer import AsyncRabbitMQProducer
 from src.core.settings.setting import Settings
 
 

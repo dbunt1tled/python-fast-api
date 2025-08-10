@@ -13,11 +13,11 @@ from src.core.web_socket.ws_manager import WSManager
 
 class WSService(WSHandler):
     def __init__(
-            self,
-            ws_manager: WSManager,
-            hash_service: HashService,
-            services: list[WSHandler],
-            log: Log,
+        self,
+        ws_manager: WSManager,
+        hash_service: HashService,
+        services: list[WSHandler],
+        log: Log,
     ) -> None:
         self.ws_manager = ws_manager
         self.hash_service = hash_service
@@ -45,7 +45,7 @@ class WSService(WSHandler):
         for service in self.services:
             await service.add_connection(user_id, websocket)
 
-    async def process_message(self, user_id: str,message: dict[str, Any], websocket: WebSocket) -> None:
+    async def process_message(self, user_id: str, message: dict[str, Any], websocket: WebSocket) -> None:
         tp = message.get("type", WSType.UNKNOWN.value)
         if not is_enum_value(enum_class=WSType, value=tp):
             self.log.warning(f"WS message: user {user_id}, unknown message type: {message}")
@@ -61,7 +61,6 @@ class WSService(WSHandler):
         if message_type == WSType.UNKNOWN:
             self.log.warning(f"WS message: user {user_id}, unknown message type: {message}")
             return
-
 
         for service in self.services:
             if service.can(ws_type=message_type):
