@@ -10,6 +10,7 @@ A modern, production-ready FastAPI boilerplate with built-in authentication, use
 - **JWT Authentication** - Secure token-based authentication
 - **Pydantic v2** - Data validation and settings management
 - **Dependency Injection** - Clean architecture with dependency injection
+- **WebSockets** - Real-time bidirectional communication for notifications and live updates
 - **RabbitMQ Integration** - Message queuing for background tasks and email notifications
 - **Async MySQL** - Async database support with aiomysql
 - **Environment Configuration** - Easy environment variable management
@@ -17,6 +18,7 @@ A modern, production-ready FastAPI boilerplate with built-in authentication, use
 - **Structured Logging** - Ready for production logging with Loki support
 - **Type Hints** - Full Python type support
 - **Email Service** - Built-in email service for user notifications with queue support
+- **Gunicorn with uvloop** - High-performance server with ultra-fast event loop implementation
 
 ## 📦 Prerequisites
 
@@ -59,7 +61,11 @@ A modern, production-ready FastAPI boilerplate with built-in authentication, use
 
 Start the development server:
 ```bash
-uvicorn server:app --reload
+# Development mode with auto-reload
+python server.py
+
+# Production mode with Gunicorn and uvloop
+gunicorn -c gunicorn.conf.py server:app
 ```
 
 The API will be available at `http://localhost:8000`
@@ -86,7 +92,8 @@ src/
 ├── app/                    # Application components
 │   ├── auth/              # Authentication module
 │   ├── user/              # User management
-│   └── user_notification/ # Notification system
+│   ├── user_notification/ # Notification system
+│   └── ws/                # WebSockets implementation
 ├── cmd/                    # Command-line tools
 │   └── worker/            # Background workers
 │       └── email/         # Email processing workers
@@ -97,7 +104,8 @@ src/
 │   ├── log/              # Logging configuration
 │   ├── rabbit_mq/        # RabbitMQ integration
 │   ├── service/          # Core services
-│   └── settings/         # Application settings
+│   ├── settings/         # Application settings
+│   └── web_socket/       # WebSockets core functionality
 └── database/              # Database configuration
 ```
 
@@ -118,6 +126,9 @@ src/
 ### Notifications
 - `GET /user-notifications` - List user notifications
 - `POST /user-notifications` - Create a notification
+
+### WebSockets
+- `WebSocket /ws/{user_id}` - Real-time connection for user-specific notifications and updates
 
 ## 🔒 Environment Variables
 
