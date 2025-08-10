@@ -10,7 +10,7 @@ from src.core.http.controller import BaseController
 class WSController(BaseController):
     def __init__(self, app: FastAPI, container: Container) -> None:
         super().__init__(container=container)
-        app.add_api_websocket_route(path="/connect/{user_id}", endpoint=self.connect)
+        app.add_api_websocket_route(path="/ws/{user_id}", endpoint=self.connect)
 
     async def connect(
             self,

@@ -5,6 +5,7 @@ from fastapi import WebSocket, status
 
 from src.app.ws.service.ws_handler import WSHandler
 from src.core.log.log import Log
+from src.core.service.functions import is_enum_value
 from src.core.service.hash_service import HashService
 from src.core.web_socket.enum.ws_type import WSType
 from src.core.web_socket.ws_manager import WSManager
@@ -45,7 +46,11 @@ class WSService(WSHandler):
             await service.add_connection(user_id, websocket)
 
     async def process_message(self, user_id: str,message: dict[str, Any], websocket: WebSocket) -> None:
-        message_type = WSType(message.get("type", WSType.UNKNOWN.value))
+        tp = message.get("type", WSType.UNKNOWN.value)
+        if not is_enum_value(enum_class=WSType, value=tp):
+            self.log.warning(f"WS message: user {user_id}, unknown message type: {message}")
+            return
+        message_type = WSType(tp)
         if message_type == WSType.PING:
             await websocket.send_text(json.dumps({"type": "pong"}))
             return

@@ -32,18 +32,23 @@ class WSManager:
                 self._connections.pop(user_id, None)
         self.log.info(f"🍎 WebSocket disconnected: {user_id}")
 
-    async def send_to_user(self, user_id: str, data: dict[str, Any]) -> int:
+    async def send_to_user(self, user_id: str, data: dict[str, Any], websocket: WebSocket|None = None) -> int:
         conns = list(self._connections.get(user_id, []))
         if not conns:
             self.log.debug(f"🍊 WebSocket No active ws for user {user_id}")
             return 0
-        coros = [self._safe_send(ws, data, user_id) for ws in conns]
-        results = await asyncio.gather(*coros, return_exceptions=True)
-        success = sum(1 for r in results if r is True)
+        if websocket is not None:
+            success = int(await self._safe_send(websocket, data, user_id))
+        else:
+            coros = [self._safe_send(ws, data, user_id) for ws in conns]
+            results = await asyncio.gather(*coros, return_exceptions=True)
+            success = sum(1 for r in results if r is True)
         self.log.info(f"🍐 WebSocket sent message to {success}/{len(conns)} connections for user {user_id}")
         return success
 
-    async def broadcast(self, data: dict[str, Any], exclude_user_id: list[str] = []) -> int:
+    async def broadcast(self, data: dict[str, Any], exclude_user_id: list[str] | None = None) -> int:
+        if exclude_user_id is None:
+            exclude_user_id = []
         success = 0
         user_ids = []
         for user_id in self._connections.keys():

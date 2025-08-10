@@ -5,7 +5,6 @@ from src.app.auth.dto.confirm_user import ConfirmUserRequest
 from src.app.auth.dto.login import LoginRequest
 from src.app.auth.dto.re_send_confirm_email import ReSendConfirmEmailRequest
 from src.app.auth.dto.sign_up import SignupRequest
-from src.cmd.worker.email.email_action import EmailAction
 from src.core.db.repository import Filter, Oper
 from src.core.di.container import Container
 from src.core.dto.dto import Message

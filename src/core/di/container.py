@@ -120,7 +120,7 @@ class Container(containers.DeclarativeContainer):
         WSService,
         ws_manager=ws_manager,
         hash_service=hash_service,
-        services=[ws_notification_service],
+        services=providers.List(ws_notification_service),
         log=log,
     )
 
