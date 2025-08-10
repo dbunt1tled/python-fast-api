@@ -22,6 +22,7 @@ from src.core.http.middleware.x_api_key_auth import XApiKeyAuth
 from src.core.http.response.api_response_service import ApiResponseService
 from src.core.http.response.json_api import JsonAPIService
 from src.core.service.functions import extract_body, filter_headers
+from src.core.settings.setting import app_config
 
 
 @asynccontextmanager
@@ -50,17 +51,11 @@ di = Container()
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
-    expose_headers=[
-        "X-Total-Count",
-        "X-Per-Page",
-        "X-Current-Page",
-        "X-Total-Pages",
-        "X-User-Role",
-    ],
+    allow_origins=app_config.cors_allow_origins,
+    allow_credentials=app_config.cors_allow_credentials,
+    allow_methods=app_config.cors_allow_methods,
+    allow_headers=app_config.cors_allow_headers,
+    expose_headers=app_config.cors_expose_headers,
 )
 app.add_middleware(
     AuthBearer,
