@@ -2,7 +2,7 @@ from fastapi import APIRouter, Depends, FastAPI
 
 from src.app.user_notification.data.user_notification_status import UserNotificationStatus
 from src.app.user_notification.dto.user_notification import UserNotificationCreateRequest, UserNotificationListRequest
-from src.core.db.repository import Filter, FilterOperator, Pagination
+from src.core.db.repository import Filter, Oper, Pagination
 from src.core.di.container import Container
 from src.core.http.controller import BaseController
 from src.core.http.request.state import AuthState, get_auth_state
@@ -18,12 +18,14 @@ class UserNotificationController(BaseController):
         app.include_router(router=router)
 
     async def user_list(
-        self, state: AuthState = Depends(get_auth_state), req: UserNotificationListRequest = Depends()
+        self,
+        state: AuthState = Depends(get_auth_state),
+        req: UserNotificationListRequest = Depends(),
     ) -> JsonApiResponse:
         notifications = await self.container.user_notification_service().all(
             filters=[
-                Filter("user_id", FilterOperator.EQ, state.user.id),
-                Filter("status", FilterOperator.EQ, req.status),
+                Filter("user_id", Oper.EQ, state.user.id),
+                Filter("status", Oper.EQ, req.status),
             ],
             pagination=Pagination(
                 per_page=req.per_page or 10,
