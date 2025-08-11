@@ -10,9 +10,9 @@ from src.core.http.controller import BaseController
 class WSController(BaseController):
     def __init__(self, app: FastAPI, container: Container) -> None:
         super().__init__(container=container)
-        app.add_api_websocket_route(path="/ws/{user_id}", endpoint=self.connect)
+        app.add_api_websocket_route(path="/ws/{user_id}", endpoint=self.wss)
 
-    async def connect(
+    async def wss(
         self,
         websocket: WebSocket,
         user_id: str,
@@ -23,13 +23,12 @@ class WSController(BaseController):
             async for data in websocket.iter_text():
                 try:
                     message = json.loads(data)
-
                     await ws_service.process_message(user_id=user_id, message=message, websocket=websocket)
-
                 except WebSocketDisconnect:
                     break
                 except json.JSONDecodeError:
                     self.logger.warning(f"Invalid JSON received from user {user_id}")
+                    await ws_service.ws_manager.send_to_user(user_id=user_id, data={"message": "Incoming message is not valid"}, websocket=websocket)
                 except Exception as e:
                     self.logger.error(f"Error handling WebSocket message from user {user_id}: {e}")
                     break
