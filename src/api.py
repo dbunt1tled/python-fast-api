@@ -10,6 +10,7 @@ from starlette.responses import JSONResponse
 from src.app.auth.controller.auth_controller import AuthController
 from src.app.user.controller.user_controller import UserController
 from src.app.user_notification.controller.user_notification_controller import UserNotificationController
+from src.app.ws.route.optimized_ws_controller import OptimizedWSController
 from src.app.ws.route.ws_controller import WSController
 from src.core.di.container import Container
 from src.core.enum.env import Env
@@ -33,15 +34,16 @@ async def lifespan(api: FastAPI) -> AsyncGenerator[None]:
     UserController(app=api, container=container)
     UserNotificationController(app=api, container=container)
     WSController(app=api, container=container)
+    OptimizedWSController(app=api, container=container)
 
-    # for route in api.routes:
-    #     if hasattr(route, "methods"):  # HTTP
-    #         methods = ",".join(route.methods)
-    #         print(f"HTTP     {methods:<10} {route.path}")
-    #     elif route.__class__.__name__ == "APIWebSocketRoute":
-    #         print(f"WS       {'-':<10} {route.path}")
-    #     else:
-    #         print(f"UNKNOWN  {'-':<10} {route.path}")
+    for route in api.routes:
+        if hasattr(route, "methods"):  # HTTP
+            methods = ",".join(route.methods)
+            print(f"HTTP     {methods:<10} {route.path}")
+        elif route.__class__.__name__ == "APIWebSocketRoute":
+            print(f"WS       {'-':<10} {route.path}")
+        else:
+            print(f"UNKNOWN  {'-':<10} {route.path}")
 
     yield
     await container.db_config().close()

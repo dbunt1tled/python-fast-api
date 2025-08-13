@@ -1,12 +1,14 @@
 import asyncio
-from typing import Any
+from typing import Any, ClassVar
 
-from fastapi import WebSocket
+from fastapi import WebSocket, status
 
 from src.core.log.log import Log
 
 
 class WSManager:
+    MAX_CONNECTIONS: ClassVar[int] = 1000
+
     def __init__(
         self,
         log: Log,
@@ -16,6 +18,10 @@ class WSManager:
         self.log = log
 
     async def connect(self, user_id: str, websocket: WebSocket) -> None:
+        if len(self._connections) >= self.MAX_CONNECTIONS:
+            await websocket.close(code=status.WS_1008_POLICY_VIOLATION)  # Connection limit exceeded
+            self.log.error(f"🥕 WebSocket connect: user {user_id}, connection limit exceeded")
+            return
         await websocket.accept()
         async with self._lock:
             conns = self._connections.setdefault(user_id, set())

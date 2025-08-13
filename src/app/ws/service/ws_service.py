@@ -1,7 +1,9 @@
+import asyncio
 import json
-from typing import Any
+from typing import Any, ClassVar
 
 from fastapi import WebSocket, status
+from starlette.websockets import WebSocketDisconnect
 
 from src.app.ws.service.ws_handler import WSHandler
 from src.core.log.log import Log
@@ -12,6 +14,8 @@ from src.core.web_socket.ws_manager import WSManager
 
 
 class WSService(WSHandler):
+    HEARTBEAT_INTERVAL: ClassVar[int] = 28  # seconds
+
     def __init__(
         self,
         ws_manager: WSManager,
@@ -72,6 +76,14 @@ class WSService(WSHandler):
         for service in self.services:
             await service.remove_connection(user_id=user_id, websocket=websocket)
         await self.ws_manager.disconnect(user_id=user_id, websocket=websocket)
+
+    async def send_heartbeat(self, websocket: WebSocket) -> None:
+        while True:
+            try:
+                await asyncio.sleep(self.HEARTBEAT_INTERVAL)
+                await websocket.send_text("heartbeat")
+            except WebSocketDisconnect:
+                break
 
     @staticmethod
     def can(ws_type: WSType) -> bool:
