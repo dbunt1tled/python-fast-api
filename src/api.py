@@ -5,6 +5,7 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI, Request
 from fastapi.exceptions import RequestValidationError
 from starlette.middleware.cors import CORSMiddleware
+from starlette.middleware.gzip import GZipMiddleware
 from starlette.responses import JSONResponse
 
 from src.app.auth.controller.auth_controller import AuthController
@@ -76,6 +77,7 @@ app.add_middleware(
     hash_service=di.hash_service(),
     user_service=di.user_service(),
 )
+app.add_middleware(GZipMiddleware, minimum_size=1000)
 app.add_middleware(XApiKeyAuth, hash_service=di.hash_service())
 if di.app_config().log_request:
     app.add_middleware(LoggingRequest, logger=di.log_request())
