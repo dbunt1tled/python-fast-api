@@ -1,7 +1,9 @@
+import asyncio
 import json
-from typing import Any
+from typing import Any, ClassVar
 
 from fastapi import WebSocket, status
+from starlette.websockets import WebSocketDisconnect
 
 from src.app.ws.service.ws_handler import WSHandler
 from src.core.log.log import Log
@@ -12,6 +14,9 @@ from src.core.web_socket.ws_manager import WSManager
 
 
 class WSService(WSHandler):
+    MAX_QUEUE_SIZE: ClassVar[int] = 100
+    HEARTBEAT_INTERVAL: ClassVar[int] = 28  # seconds
+
     def __init__(
         self,
         ws_manager: WSManager,
@@ -21,6 +26,10 @@ class WSService(WSHandler):
     ) -> None:
         self.ws_manager = ws_manager
         self.hash_service = hash_service
+        self._queue: asyncio.Queue = asyncio.Queue(maxsize=self.MAX_QUEUE_SIZE)
+        self.stop_event = asyncio.Event()
+        self.worker_task: asyncio.Task | None = None
+        self.heartbeat_task: asyncio.Task | None = None
         self.log = log
         self.services = services
 
@@ -41,11 +50,14 @@ class WSService(WSHandler):
             self.log.error(f"WS connect: user {user_id}, invalid token: {e}")
             return
 
-        await self.ws_manager.connect(user_id, websocket)
+        await self.ws_manager.connect(user_id=user_id, websocket=websocket)
+        asyncio.create_task(self.send_heartbeat(websocket=websocket))
         for service in self.services:
-            await service.add_connection(user_id, websocket)
-
+            await service.add_connection(user_id=user_id, websocket=websocket)
     async def process_message(self, user_id: str, message: dict[str, Any], websocket: WebSocket) -> None:
+        await self._queue.put((user_id, message, websocket))
+
+    async def _handle_message(self, user_id: str, message: dict[str, Any], websocket: WebSocket) -> None:
         tp = message.get("type", WSType.UNKNOWN.value)
         if not is_enum_value(enum_class=WSType, value=tp):
             self.log.warning(f"WS message: user {user_id}, unknown message type: {message}")
@@ -72,6 +84,32 @@ class WSService(WSHandler):
         for service in self.services:
             await service.remove_connection(user_id=user_id, websocket=websocket)
         await self.ws_manager.disconnect(user_id=user_id, websocket=websocket)
+
+    async def send_heartbeat(self, websocket: WebSocket) -> None:
+        while True:
+            try:
+                await asyncio.sleep(self.HEARTBEAT_INTERVAL)
+                await websocket.send_text("heartbeat")
+            except WebSocketDisconnect:
+                break
+
+    async def worker_start(self) -> None:
+        self.worker_task = asyncio.create_task(self._worker())
+
+    async def worker_stop(self) -> None:
+        self.stop_event.set()
+        if self.worker_task:
+            await self.worker_task
+
+    async def _worker(self) -> None:
+        while not self.stop_event.is_set():
+            user_id, message, websocket = await self._queue.get()
+            try:
+                await self._handle_message(user_id=user_id, message=message, websocket=websocket)
+            except Exception as e:
+                self.log.error(f"Error processing WebSocket message from user {user_id}: {e}")
+            finally:
+                self._queue.task_done()
 
     @staticmethod
     def can(ws_type: WSType) -> bool:
