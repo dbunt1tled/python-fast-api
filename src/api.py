@@ -30,6 +30,7 @@ from src.core.settings.setting import app_config
 async def lifespan(api: FastAPI) -> AsyncGenerator[None]:
     container = Container()
     await container.rmq_producer().initialize()
+    await container.ws_service().worker_start()
     AuthController(app=api, container=container)
     UserController(app=api, container=container)
     UserNotificationController(app=api, container=container)
@@ -47,6 +48,7 @@ async def lifespan(api: FastAPI) -> AsyncGenerator[None]:
 
     yield
     await container.db_config().close()
+    await container.ws_service().worker_stop()
     await container.rmq_producer().close()
     await container.rmq_consumer().close()
     await container.ws_manager().close_all()
