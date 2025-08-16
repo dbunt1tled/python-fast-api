@@ -77,7 +77,7 @@ app.add_middleware(
     hash_service=di.hash_service(),
     user_service=di.user_service(),
 )
-app.add_middleware(GZipMiddleware, minimum_size=1000)
+#app.add_middleware(GZipMiddleware, minimum_size=1000)
 app.add_middleware(XApiKeyAuth, hash_service=di.hash_service())
 if di.app_config().log_request:
     app.add_middleware(LoggingRequest, logger=di.log_request())
