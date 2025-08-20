@@ -20,6 +20,7 @@ from src.core.exception.exceptions import DomainException
 from src.core.http.middleware.auth_bearer import AuthBearer
 from src.core.http.middleware.body_save import BodySave
 from src.core.http.middleware.logging import LoggingRequest
+from src.core.http.middleware.preflight_cache import PreflightCacheMiddleware
 from src.core.http.middleware.x_api_key_auth import XApiKeyAuth
 from src.core.http.response.api_response_service import ApiResponseService
 from src.core.http.response.json_api import JsonAPIService
@@ -82,6 +83,7 @@ if di.app_config().log_request:
     app.add_middleware(LoggingRequest, logger=di.log_request())
 app.add_middleware(BodySave, hash_service=di.hash_service())
 app.add_middleware(GZipMiddleware, minimum_size=1000)
+app.add_middleware(PreflightCacheMiddleware)
 
 async def exception_handler(request: Request, e: Exception) -> JSONResponse:
     di = Container()

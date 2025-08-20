@@ -36,7 +36,7 @@ class AuthBearer(BaseHTTPMiddleware):
 
     async def dispatch(self, request: Request, call_next: RequestResponseEndpoint) -> Response:
         request.state.is_authenticated = False
-        if AuthBearer._is_excluded_path(request.url.path):
+        if request.method == "OPTIONS" or AuthBearer._is_excluded_path(request.url.path):
             return await call_next(request)
 
         authorization = request.headers.get("Authorization")
