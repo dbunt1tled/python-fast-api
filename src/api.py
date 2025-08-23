@@ -4,6 +4,10 @@ from contextlib import asynccontextmanager
 
 from fastapi import FastAPI, Request
 from fastapi.exceptions import RequestValidationError
+from slowapi import Limiter, _rate_limit_exceeded_handler  #type: ignore
+from slowapi.errors import RateLimitExceeded
+from slowapi.middleware import SlowAPIMiddleware
+from slowapi.util import get_remote_address
 from starlette.middleware.cors import CORSMiddleware
 from starlette.middleware.gzip import GZipMiddleware
 from starlette.responses import JSONResponse
@@ -84,6 +88,14 @@ if di.app_config().log_request:
 app.add_middleware(BodySave, hash_service=di.hash_service())
 app.add_middleware(GZipMiddleware, minimum_size=1000)
 app.add_middleware(PreflightCacheMiddleware)
+
+limiter = Limiter(
+    key_func=get_remote_address,
+    enabled=app_config.slowapi_limit_enabled,
+    default_limits=app_config.slowapi_default_limits
+)
+app.state.limiter = limiter
+app.add_middleware(SlowAPIMiddleware)
 
 async def exception_handler(request: Request, e: Exception) -> JSONResponse:
     di = Container()

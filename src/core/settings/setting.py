@@ -39,5 +39,8 @@ class Settings(BaseSettings):
     cors_allow_headers: list[str] = Field(default=["*"], validation_alias="CORS_ALLOW_HEADERS")
     cors_expose_headers: list[str] = Field(default=["*"], validation_alias="CORS_EXPOSE_HEADERS")
 
+    slowapi_limit_enabled: bool = Field(default=True, validation_alias="REQUEST_LIMITER_ENABLED")
+    slowapi_default_limits: list[str] = Field(default=["30/minute"], validation_alias="REQUEST_LIMITER_DEFAULT_LIMITS")
+
 
 app_config = Settings()  # type: ignore
